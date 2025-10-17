@@ -1,12 +1,54 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function Register() {
   const navigate = useNavigate()
+    const [formData, setFormData] = useState({
+      fullname: "",
+      email: "",
+      password: "",
+    });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const rawApiUrl = import.meta.env.VITE_API_URL ?? '';
+    const API_URL = rawApiUrl.startsWith('http') ? rawApiUrl : `https://${rawApiUrl}`;
+  
 
-  const onSubmit = (e: React.FormEvent) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Add real registration here
-    navigate('/landing')
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log("POST to:", `${API_URL}/user/register`);
+      console.log("body:", formData);
+      const response = await fetch(`${API_URL}/user/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const result = await response.json();
+
+      if (response.ok && result.token){
+        localStorage.setItem("token", result.token);
+        localStorage.setItem("user", JSON.stringify(result.user))
+        navigate("/", { replace: true });
+        window.location.reload();
+      }
+    } catch (err) {
+      setError("Registration error");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -22,23 +64,17 @@ export default function Register() {
             </p>
           </header>
           <form className="space-y-4" onSubmit={onSubmit}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700" htmlFor="first">First name</label>
-                <input id="first" type="text" placeholder="First name" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700" htmlFor="last">Last name</label>
-                <input id="last" type="text" placeholder="Last name" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
-              </div>
+                <label className="text-sm font-medium text-slate-700" htmlFor="full">Full name</label>
+                <input id="full" type="text" placeholder="Full name" value={formData.fullname} onChange={handleInputChange} name="fullname" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700" htmlFor="email">Email</label>
-              <input id="email" type="email" placeholder="you@example.com" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
+              <input id="email" type="email" placeholder="you@example.com" value={formData.email} onChange={handleInputChange} name="email" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700" htmlFor="password">Password</label>
-              <input id="password" type="password" placeholder="••••••••" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
+              <input id="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleInputChange} name="password" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
             </div>
             <div className="flex gap-3">
               <button type="button" className="flex-1 rounded-xl border border-slate-200 bg-white text-[#0F172A] py-3 font-semibold hover:bg-slate-50 transition">Change method</button>
