@@ -8,12 +8,13 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-white">
       <PillNav
-        logo={"/LevelUp_logo.svg"}
+        logo={"/logoputih.svg"}
         logoAlt="LevelUp Logo"
         items={[
           { label: 'Home', href: '/' },
           { label: 'Marketplace', href: '/marketplace' },
           { label: 'UMKM Nearby', href: '/umkm-nearby' },
+          { label: 'Chatbot AI', href: '/chatbot' },
           { label: 'Register', href: '/register', variant: 'accent' },
           { label: 'Login', href: '/login', variant: 'accent' }
         ]}
