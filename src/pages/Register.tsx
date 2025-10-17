@@ -42,12 +42,10 @@ export default function Register() {
       let result: any = {};
       try { result = text ? JSON.parse(text) : {}; } catch {}
 
-      if (response.ok && result.token){
-        localStorage.setItem("token", result.token);
-        localStorage.setItem("user", JSON.stringify(result.user))
+      if (response.status && result.data){
         toast.success('Pendaftaran berhasil. Selamat datang!');
-        navigate("/", { replace: true });
-        window.location.reload();
+        navigate("/login", { replace: true });
+        // window.location.reload();
         return;
       }
       const status = response.status;
