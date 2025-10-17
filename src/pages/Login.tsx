@@ -75,6 +75,9 @@ export default function Login() {
     } catch (err) {
       setError("Koneksi gagal. Periksa jaringan Anda.");
       toast.error('Koneksi gagal. Periksa jaringan Anda.', { title: 'Login gagal' });
+    } finally {
+      // Pastikan tombol tidak terus dalam state loading ketika gagal
+      setLoading(false);
     }
   }
 
