@@ -6,6 +6,8 @@ import LandingPage from './pages/LandingPage'
 import ChatbotAI from './pages/ChatbotAI'
 import ChatBubble from './components/chatbot/ChatBubble'
 import Marketplace from './pages/Marketplace'
+import MarketplaceProduct from './pages/MarketplaceProduct'
+import ProductDetail from './pages/ProductDetail'
 import UpgradeToSeller from './pages/UpgradeToSeller'
 
 function AppShell() {
@@ -17,6 +19,8 @@ function AppShell() {
 				<Route path="/" element={<LandingPage />} />
 				<Route path="/chatbot" element={<ChatbotAI />} />
 				<Route path="/marketplace" element={<Marketplace />} />
+				<Route path="/marketplace-product" element={<MarketplaceProduct />} />
+				<Route path="/product-detail" element={<ProductDetail />} />
 				<Route path="/login" element={<Login />} />
 				<Route path="/register" element={<Register />} />
 				<Route path="/upgrade-to-seller" element={<UpgradeToSeller />} />

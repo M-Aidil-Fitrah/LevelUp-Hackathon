@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { DirectionAwareHover } from "@/components/ui/direction-aware-hover";
 import PillNav from "@/components/PillNav";
 import { Footer } from "@/components/Footer";
@@ -16,6 +17,7 @@ type Product = {
   distanceKm: number;
   imageUrl: string;
   description?: string;
+  address?: string;
 };
 
 const DATA: Product[] = [
@@ -28,6 +30,7 @@ const DATA: Product[] = [
     distanceKm: 2.1,
   imageUrl: "/assets/images/foto1.png",
     description: "Batik tulis motif klasik, karya UMKM lokal.",
+    address: "Jl. Slamet Riyadi No. 123, Solo",
   },
   {
     id: 2,
@@ -38,6 +41,7 @@ const DATA: Product[] = [
     distanceKm: 3.5,
   imageUrl: "/assets/images/foto1.png",
     description: "Cemilan garing rasa pedas gurih.",
+    address: "Jl. Diponegoro No. 45, Solo",
   },
   {
     id: 3,
@@ -48,6 +52,7 @@ const DATA: Product[] = [
     distanceKm: 1.2,
   imageUrl: "/assets/images/foto1.png",
     description: "Tas rajut unik berbagai warna.",
+    address: "Jl. Gatot Subroto No. 8, Solo",
   },
   {
     id: 4,
@@ -58,6 +63,7 @@ const DATA: Product[] = [
     distanceKm: 5.2,
   imageUrl: "/assets/images/foto1.png",
     description: "Layanan bersih maksimal untuk sepatu kesayangan.",
+    address: "Jl. Veteran No. 77, Solo",
   },
   {
     id: 5,
@@ -68,6 +74,7 @@ const DATA: Product[] = [
     distanceKm: 4.1,
   imageUrl: "/assets/images/foto1.png",
     description: "Lapis legit premium buatan rumahan.",
+    address: "Jl. Sudirman No. 20, Solo",
   },
   {
     id: 6,
@@ -78,6 +85,7 @@ const DATA: Product[] = [
     distanceKm: 2.8,
   imageUrl: "/assets/images/foto1.png",
     description: "Aksesoris handmade khas nusantara.",
+    address: "Jl. Gajah Mada No. 12, Solo",
   },
   {
     id: 7,
@@ -88,6 +96,7 @@ const DATA: Product[] = [
     distanceKm: 3.3,
   imageUrl: "/assets/images/foto1.png",
     description: "Outer stylish berbahan tenun ikat.",
+    address: "Jl. Ahmad Yani No. 99, Solo",
   },
   {
     id: 8,
@@ -98,6 +107,7 @@ const DATA: Product[] = [
     distanceKm: 6.7,
   imageUrl: "/assets/images/foto1.png",
     description: "Biji kopi robusta sangrai medium.",
+    address: "Jl. Rajiman No. 5, Solo",
   },
   {
     id: 9,
@@ -108,6 +118,7 @@ const DATA: Product[] = [
     distanceKm: 1.9,
     imageUrl: "/assets/images/foto1.png",
     description: "Mukena adem dan nyaman dipakai.",
+    address: "Jl. Mangkunegara No. 14, Solo",
   },
   {
     id: 10,
@@ -118,6 +129,7 @@ const DATA: Product[] = [
     distanceKm: 7.5,
     imageUrl: "/assets/images/foto1.png",
     description: "Paket nasi lengkap untuk acara.",
+    address: "Jl. Slamet Riyadi No. 200, Solo",
   },
 ];
 
@@ -266,20 +278,21 @@ export default function Marketplace() {
             </div>
           ) : (
             pageItems.map((item) => (
-              <DirectionAwareHover
-                key={item.id}
-                imageUrl={item.imageUrl}
-                className="w-full h-64 md:h-80"
-                showTextAlways={true}
-                childrenClassName="text-white absolute bottom-4 left-4 z-40 px-3 py-2 rounded-md shadow-sm"
-              >
-                <div>
-                  <p className="font-semibold text-lg">{item.name}</p>
-                  <p className="text-sm">
-                    Rp{(item.priceMin * 1000).toLocaleString("id-ID")} - Rp{(item.priceMax * 1000).toLocaleString("id-ID")} · {item.distanceKm}km · {capitalize(item.category)}
-                  </p>
-                </div>
-              </DirectionAwareHover>
+              <Link key={item.id} to={`/marketplace-product?storeId=${item.id}`} className="block">
+                <DirectionAwareHover
+                  imageUrl={item.imageUrl}
+                  className="w-full h-64 md:h-80"
+                  showTextAlways={true}
+                  childrenClassName="text-white absolute bottom-4 left-4 z-40 px-3 py-2 rounded-md shadow-sm"
+                >
+                  <div>
+                    <p className="font-semibold text-lg">{item.name}</p>
+                    <p className="text-sm">
+                      Rp{(item.priceMin * 1000).toLocaleString("id-ID")} - Rp{(item.priceMax * 1000).toLocaleString("id-ID")} · {item.distanceKm}km · {capitalize(item.category)}
+                    </p>
+                  </div>
+                </DirectionAwareHover>
+              </Link>
             ))
           )}
         </div>
