@@ -52,7 +52,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ link, text, image }) => {
     const rect = itemRef.current.getBoundingClientRect();
     const edge = findClosestEdge(ev.clientX - rect.left, ev.clientY - rect.top, rect.width, rect.height);
 
-    const tl = gsap.timeline({ defaults: animationDefaults }) as TimelineMax;
+    const tl = gsap.timeline({ defaults: animationDefaults });
     tl.to(marqueeRef.current, { y: edge === 'top' ? '-101%' : '101%' }).to(marqueeInnerRef.current, {
       y: edge === 'top' ? '101%' : '-101%'
     });
@@ -71,7 +71,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ link, text, image }) => {
   }, [text, image]);
 
   return (
-    <div className="relative overflow-hidden text-center bg-white group border-t border-neutral-200 h-24 md:h-28" ref={itemRef}>
+    <div className="relative overflow-hidden text-center bg-white group border-t border-black h-24 md:h-28" ref={itemRef}>
       <a
         className="flex items-center justify-center h-full w-full relative cursor-pointer uppercase no-underline font-semibold text-black text-[4vh] transition-colors duration-200 group-hover:text-white"
         href={link}

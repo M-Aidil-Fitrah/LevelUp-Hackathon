@@ -1,1 +1,24 @@
 @import "tailwindcss";
+
+@layer utilities {
+	@keyframes marquee-x {
+		from {
+			transform: translateX(0%);
+		}
+		to {
+			transform: translateX(-50%);
+		}
+	}
+
+	.animate-marquee {
+		animation: marquee-x 15s linear infinite;
+	}
+
+	/* Pause by default; run on hover of parent group */
+	.group .animate-marquee {
+		animation-play-state: paused;
+	}
+	.group:hover .animate-marquee {
+		animation-play-state: running;
+	}
+}
