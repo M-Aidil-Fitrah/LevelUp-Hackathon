@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
+import ProfileBadge from './ProfileBadge';
 
 export type PillNavItem = {
   label: string;
@@ -53,6 +54,34 @@ const PillNav: React.FC<PillNavProps> = ({
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const navItemsRef = useRef<HTMLDivElement | null>(null);
   const logoRef = useRef<HTMLAnchorElement | HTMLElement | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    try {
+      return !!localStorage.getItem('token');
+    } catch {
+      return false;
+    }
+  });
+
+  // Detect login state via localStorage token
+  useEffect(() => {
+    const check = () => {
+      try {
+        const t = localStorage.getItem('token');
+        setIsLoggedIn(!!t);
+      } catch {}
+    };
+    check();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'token') check();
+    };
+    const onAuthChanged = () => check();
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('auth-changed', onAuthChanged as any);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('auth-changed', onAuthChanged as any);
+    };
+  }, []);
 
   useEffect(() => {
     const layout = () => {
@@ -254,8 +283,9 @@ const PillNav: React.FC<PillNavProps> = ({
   // Split items: auth (Register/Login) vs main
   const isAuthItem = (item: PillNavItem) =>
     item.variant === 'accent' || /^(register|login)$/i.test(item.label?.trim());
+  const showAuth = !isLoggedIn;
   const mainItems = items.filter(i => !isAuthItem(i));
-  const authItems = items.filter(i => isAuthItem(i));
+  const authItems = showAuth ? items.filter(i => isAuthItem(i)) : [];
 
   return (
     <div
@@ -440,7 +470,14 @@ const PillNav: React.FC<PillNavProps> = ({
       </nav>
 
       {/* Auth group (Register/Login) pinned to top-right; visuals unchanged */}
-      {authItems.length > 0 && (
+      {isLoggedIn ? (
+        <div
+          className="hidden md:flex items-center absolute right-4 top-0"
+          style={{ height: 'var(--nav-h)' }}
+        >
+          <ProfileBadge />
+        </div>
+      ) : authItems.length > 0 && (
         <div
           className="hidden md:flex items-center absolute right-4 top-0"
           style={{ height: 'var(--nav-h)' }}
@@ -535,7 +572,13 @@ const PillNav: React.FC<PillNavProps> = ({
         }}
       >
         <ul className="list-none m-0 p-[3px] flex flex-col gap-[3px]">
-          {items.map(item => {
+          {/* If logged in, show compact profile at top of mobile menu */}
+          {isLoggedIn && (
+            <li className="px-2 py-2">
+              <ProfileBadge variant="mobile" />
+            </li>
+          )}
+          {(showAuth ? items : items.filter(i => !isAuthItem(i))).map(item => {
             const isAccent = item.variant === 'accent' || /^(register|login)$/i.test(item.label?.trim());
             const defaultStyle: React.CSSProperties = isAccent
               ? { background: accentColor, color: '#fff' }
