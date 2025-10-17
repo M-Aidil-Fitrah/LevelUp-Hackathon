@@ -6,6 +6,7 @@ import LandingPage from './pages/LandingPage'
 import ChatbotAI from './pages/ChatbotAI'
 import ChatBubble from './components/chatbot/ChatBubble'
 import Marketplace from './pages/Marketplace'
+import UpgradeToSeller from './pages/UpgradeToSeller'
 
 function AppShell() {
 	const location = useLocation();
@@ -18,6 +19,7 @@ function AppShell() {
 				<Route path="/marketplace" element={<Marketplace />} />
 				<Route path="/login" element={<Login />} />
 				<Route path="/register" element={<Register />} />
+				<Route path="/upgrade-to-seller" element={<UpgradeToSeller />} />
 				<Route path="*" element={<Navigate to="/" replace />} />
 			</Routes>
 			{!hideChat && <ChatBubble />}
