@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'
+import { useToast } from '@/components/ui/Toast';
 
 export default function Register() {
   const navigate = useNavigate()
+    const { toast } = useToast();
     const [formData, setFormData] = useState({
       fullname: "",
       email: "",
@@ -36,16 +38,34 @@ export default function Register() {
         },
         body: JSON.stringify(formData),
       });
-      const result = await response.json();
+      const text = await response.text();
+      let result: any = {};
+      try { result = text ? JSON.parse(text) : {}; } catch {}
 
       if (response.ok && result.token){
         localStorage.setItem("token", result.token);
         localStorage.setItem("user", JSON.stringify(result.user))
+        toast.success('Pendaftaran berhasil. Selamat datang!');
         navigate("/", { replace: true });
         window.location.reload();
+        return;
       }
+      const status = response.status;
+      const apiMsg: string = result?.message || result?.error || '';
+      let msg = 'Terjadi kesalahan saat pendaftaran.';
+
+      if (status === 400) {
+        msg = apiMsg || 'Permintaan tidak valid. Periksa input Anda.';
+      } else if (status === 409) {
+        msg = apiMsg || 'Email sudah terdaftar. Gunakan email lain atau login.';
+      } else if (status >= 500) {
+        msg = apiMsg || 'Server sedang bermasalah. Coba lagi nanti.';
+      }
+      setError(msg);
+      toast.error(msg, { title: 'Pendaftaran gagal' });
     } catch (err) {
-      setError("Registration error");
+      setError("Koneksi gagal. Periksa jaringan Anda.");
+      toast.error('Koneksi gagal. Periksa jaringan Anda.', { title: 'Pendaftaran gagal' });
     } finally {
       setLoading(false);
     }
@@ -63,6 +83,11 @@ export default function Register() {
               <Link className="text-[#FF2000] font-medium hover:underline" to="/login">Log in</Link>
             </p>
           </header>
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 text-red-800 px-4 py-3 text-sm">
+              {error}
+            </div>
+          )}
           <form className="space-y-4" onSubmit={onSubmit}>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700" htmlFor="full">Full name</label>
@@ -77,8 +102,9 @@ export default function Register() {
               <input id="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleInputChange} name="password" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
             </div>
             <div className="flex gap-3">
-              <button type="button" className="flex-1 rounded-xl border border-slate-200 bg-white text-[#0F172A] py-3 font-semibold hover:bg-slate-50 transition">Change method</button>
-              <button type="submit" className="flex-1 rounded-xl bg-[#FF2000] text-white py-3 font-semibold shadow-sm hover:brightness-95 transition">Create account</button>
+              <button type="submit" disabled={loading} className={`flex-1 rounded-xl bg-[#FF2000] text-white py-3 font-semibold shadow-sm transition ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-95'}`}>
+                {loading ? 'Creating…' : 'Create account'}
+              </button>
             </div>
           </form>
         </div>
