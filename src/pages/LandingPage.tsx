@@ -4,12 +4,12 @@ import MagicBento from "@/components/MagicBento";
 import FlowingMenu from "@/components/FlowingMenu";
 import { useLocation } from "react-router-dom";
 import InfiniteMarquee from "@/components/InfiniteMarquee";
+import { Footer } from "@/components/Footer";
 
 const demoItems = [
   { link: '#', text: 'Marketplace', image: 'https://picsum.photos/600/400?random=1' },
   { link: '#', text: 'UMKM Nearby', image: 'https://picsum.photos/600/400?random=2' },
   { link: '#', text: 'Chatbot AI', image: 'https://picsum.photos/600/400?random=3' },
-  { link: '#', text: 'Sequoia', image: 'https://picsum.photos/600/400?random=4' }
 ];
 
 const LandingPage = () => {
@@ -50,9 +50,10 @@ const LandingPage = () => {
         particleCount={12}
         glowColor="255, 32, 0"
       />
-      <div style={{ height: '600px', position: 'relative' }} className="mt-8">
+      <div className="relative mt-6">
         <FlowingMenu items={demoItems} />
       </div>
+      <Footer />
     </div>
   );
 };
