@@ -1,7 +1,8 @@
 import Hero from "@/components/Hero";
 import PillNav from "@/components/ui/PillNav";
-import MagicBento from "@/components/ui/MagicBento";
+import MagicBento from "@/components/MagicBento";
 import { useLocation } from "react-router-dom";
+import InfiniteMarquee from "@/components/InfiniteMarquee";
 
 const LandingPage = () => {
       const location = useLocation();
@@ -27,7 +28,8 @@ const LandingPage = () => {
         pillTextColor="#000000"
         accentColor="#FF2000"
       />
-    <Hero />
+  <Hero />
+  <InfiniteMarquee className="mt-6" text="Marketplace - UMKM Nearby - Chatbot AI" direction="right" duration={30} />
     <MagicBento 
         textAutoHide={true}
         enableStars={true}
