@@ -1,12 +1,84 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { useState } from "react";
+import { useToast } from '@/components/ui/Toast';
 
 export default function Login() {
   const navigate = useNavigate()
+  const { toast } = useToast();
 
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // TODO: Add real auth here
-    navigate('/landing')
+  // const [showPassword, setShowPassword] = useState(false);
+  // const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  // const [isLoaded, setIsLoaded] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const rawApiUrl = import.meta.env.VITE_API_URL ?? '';
+  const API_URL = rawApiUrl.startsWith('http') ? rawApiUrl : `https://${rawApiUrl}`;
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log("POST to:", `${API_URL}/user/login`);
+      console.log("body:", formData);
+      const response = await fetch(`${API_URL}/user/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const text = await response.text();
+      let result: any = {};
+      try { result = text ? JSON.parse(text) : {}; } catch {}
+
+      if (response.ok && result.token){
+        localStorage.setItem("token", result.token);
+        localStorage.setItem("user", JSON.stringify(result.user))
+        toast.success('Login berhasil. Selamat datang!');
+        navigate("/", { replace: true });
+        window.location.reload();
+        return;
+      }
+
+      // Handle known error cases
+      const status = response.status;
+      const apiMsg: string = result?.message || result?.error || '';
+      let msg = 'Terjadi kesalahan saat login.';
+
+      if (status === 400) {
+        msg = apiMsg || 'Permintaan tidak valid. Periksa input Anda.';
+      } else if (status === 401) {
+        // unauthorized - wrong password or invalid credentials
+        msg = apiMsg || 'Email atau kata sandi salah.';
+      } else if (status === 404) {
+        msg = apiMsg || 'Akun tidak ditemukan. Silakan daftar terlebih dahulu.';
+      } else if (status === 409) {
+        msg = apiMsg || 'Terjadi konflik dengan data yang ada.';
+      } else if (status >= 500) {
+        msg = apiMsg || 'Server sedang bermasalah. Coba lagi nanti.';
+      }
+      setError(msg);
+      toast.error(msg, { title: 'Login gagal' });
+    } catch (err) {
+      setError("Koneksi gagal. Periksa jaringan Anda.");
+      toast.error('Koneksi gagal. Periksa jaringan Anda.', { title: 'Login gagal' });
+    } finally {
+      // Pastikan tombol tidak terus dalam state loading ketika gagal
+      setLoading(false);
+    }
   }
 
   return (
@@ -21,16 +93,23 @@ export default function Login() {
               <Link className="text-[#FF2000] font-medium hover:underline" to="/register">Create an account</Link>
             </p>
           </header>
-          <form className="space-y-4" onSubmit={onSubmit}>
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 text-red-800 px-4 py-3 text-sm">
+              {error}
+            </div>
+          )}
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700" htmlFor="email">Email</label>
-              <input id="email" type="email" placeholder="you@example.com" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
+              <input id="email" type="email" placeholder="you@example.com" value={formData.email} onChange={handleInputChange} name="email" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700" htmlFor="password">Password</label>
-              <input id="password" type="password" placeholder="••••••••" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
+              <input id="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleInputChange} name="password" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
             </div>
-            <button type="submit" className="w-full rounded-xl bg-[#FF2000] text-white py-3 font-semibold shadow-sm hover:brightness-95 transition">Log in</button>
+            <button type="submit" disabled={loading} className={`w-full rounded-xl bg-[#FF2000] text-white py-3 font-semibold shadow-sm transition ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-95'}`}>
+              {loading ? 'Logging in…' : 'Log in'}
+            </button>
           </form>
         </div>
       </div>

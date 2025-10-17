@@ -1,12 +1,72 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'
+import { useToast } from '@/components/ui/Toast';
 
 export default function Register() {
   const navigate = useNavigate()
+    const { toast } = useToast();
+    const [formData, setFormData] = useState({
+      fullname: "",
+      email: "",
+      password: "",
+    });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const rawApiUrl = import.meta.env.VITE_API_URL ?? '';
+    const API_URL = rawApiUrl.startsWith('http') ? rawApiUrl : `https://${rawApiUrl}`;
+  
 
-  const onSubmit = (e: React.FormEvent) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Add real registration here
-    navigate('/landing')
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log("POST to:", `${API_URL}/user/register`);
+      console.log("body:", formData);
+      const response = await fetch(`${API_URL}/user/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const text = await response.text();
+      let result: any = {};
+      try { result = text ? JSON.parse(text) : {}; } catch {}
+
+      if (response.status && result.data){
+        toast.success('Pendaftaran berhasil. Selamat datang!');
+        navigate("/login", { replace: true });
+        // window.location.reload();
+        return;
+      }
+      const status = response.status;
+      const apiMsg: string = result?.message || result?.error || '';
+      let msg = 'Terjadi kesalahan saat pendaftaran.';
+
+      if (status === 400) {
+        msg = apiMsg || 'Permintaan tidak valid. Periksa input Anda.';
+      } else if (status === 409) {
+        msg = apiMsg || 'Email sudah terdaftar. Gunakan email lain atau login.';
+      } else if (status >= 500) {
+        msg = apiMsg || 'Server sedang bermasalah. Coba lagi nanti.';
+      }
+      setError(msg);
+      toast.error(msg, { title: 'Pendaftaran gagal' });
+    } catch (err) {
+      setError("Koneksi gagal. Periksa jaringan Anda.");
+      toast.error('Koneksi gagal. Periksa jaringan Anda.', { title: 'Pendaftaran gagal' });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -21,28 +81,28 @@ export default function Register() {
               <Link className="text-[#FF2000] font-medium hover:underline" to="/login">Log in</Link>
             </p>
           </header>
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 text-red-800 px-4 py-3 text-sm">
+              {error}
+            </div>
+          )}
           <form className="space-y-4" onSubmit={onSubmit}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700" htmlFor="first">First name</label>
-                <input id="first" type="text" placeholder="First name" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700" htmlFor="last">Last name</label>
-                <input id="last" type="text" placeholder="Last name" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
-              </div>
+                <label className="text-sm font-medium text-slate-700" htmlFor="full">Full name</label>
+                <input id="full" type="text" placeholder="Full name" value={formData.fullname} onChange={handleInputChange} name="fullname" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700" htmlFor="email">Email</label>
-              <input id="email" type="email" placeholder="you@example.com" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
+              <input id="email" type="email" placeholder="you@example.com" value={formData.email} onChange={handleInputChange} name="email" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700" htmlFor="password">Password</label>
-              <input id="password" type="password" placeholder="••••••••" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
+              <input id="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleInputChange} name="password" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
             </div>
             <div className="flex gap-3">
-              <button type="button" className="flex-1 rounded-xl border border-slate-200 bg-white text-[#0F172A] py-3 font-semibold hover:bg-slate-50 transition">Change method</button>
-              <button type="submit" className="flex-1 rounded-xl bg-[#FF2000] text-white py-3 font-semibold shadow-sm hover:brightness-95 transition">Create account</button>
+              <button type="submit" disabled={loading} className={`flex-1 rounded-xl bg-[#FF2000] text-white py-3 font-semibold shadow-sm transition ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-95'}`}>
+                {loading ? 'Creating…' : 'Create account'}
+              </button>
             </div>
           </form>
         </div>
