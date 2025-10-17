@@ -1,6 +1,62 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from "react";
 
 export default function Login() {
+  const navigate = useNavigate()
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // TODO: Add real auth here
+    navigate('/landing')
+  }
+
+  // const [showPassword, setShowPassword] = useState(false);
+  // const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  // const [isLoaded, setIsLoaded] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const rawApiUrl = import.meta.env.VITE_API_URL ?? '';
+  const API_URL = rawApiUrl.startsWith('http') ? rawApiUrl : `https://${rawApiUrl}`;
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log("POST to:", `${API_URL}/user/login`);
+      console.log("body:", formData);
+      const response = await fetch(`${API_URL}/user/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const result = await response.json();
+
+      if (response.ok && result.token){
+        localStorage.setItem("token", result.token);
+        localStorage.setItem("user", JSON.stringify(result.user))
+        navigate("/", { replace: true });
+        window.location.reload();
+      }
+    } catch (err) {
+      setError("Login error");
+    }
+  }
+
   return (
     <div className="min-h-dvh grid md:grid-cols-2">
       <LeftPanel heading="Welcome back" sub="Log in to continue" />
@@ -13,14 +69,14 @@ export default function Login() {
               <Link className="text-[#FF2000] font-medium hover:underline" to="/register">Create an account</Link>
             </p>
           </header>
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700" htmlFor="email">Email</label>
-              <input id="email" type="email" placeholder="you@example.com" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
+              <input id="email" type="email" placeholder="you@example.com" value={formData.email} onChange={handleInputChange} name="email" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700" htmlFor="password">Password</label>
-              <input id="password" type="password" placeholder="••••••••" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
+              <input id="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleInputChange} name="password" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
             </div>
             <button type="submit" className="w-full rounded-xl bg-[#FF2000] text-white py-3 font-semibold shadow-sm hover:brightness-95 transition">Log in</button>
           </form>
