@@ -1,5 +1,6 @@
 import Hero from "@/components/Hero";
 import PillNav from "@/components/PillNav";
+import MagicBento from "@/components/MagicBento";
 import { useLocation } from "react-router-dom";
 
 const LandingPage = () => {
@@ -26,6 +27,18 @@ const LandingPage = () => {
         accentColor="#FF2000"
       />
     <Hero />
+    <MagicBento 
+        textAutoHide={true}
+        enableStars={true}
+        enableSpotlight={true}
+        enableBorderGlow={true}
+        enableTilt={true}
+        enableMagnetism={true}
+        clickEffect={true}
+        spotlightRadius={300}
+        particleCount={12}
+        glowColor="255, 32, 0"
+      />
     </div>
   );
 };

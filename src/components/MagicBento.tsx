@@ -38,7 +38,7 @@ const cardData: BentoCardProps[] = [
     title: 'Analytics',
     description: 'Track user behavior',
     label: 'Insights',
-    imageSrc: '/assets/images/header.png',
+    imageSrc: '/assets/images/foto1.png',
     imageFit: 'cover'
   },
   {
@@ -46,7 +46,7 @@ const cardData: BentoCardProps[] = [
     title: 'Dashboard',
     description: 'Centralized data view',
     label: 'Overview',
-    imageSrc: '/assets/images/header.png',
+    imageSrc: '/assets/images/foto1.png',
     imageFit: 'cover'
   },
   {
@@ -54,7 +54,7 @@ const cardData: BentoCardProps[] = [
     title: 'Collaboration',
     description: 'Work together seamlessly',
     label: 'Teamwork',
-    imageSrc: '/assets/images/header.png',
+    imageSrc: '/assets/images/foto1.png',
     imageFit: 'cover'
   },
   {
@@ -62,7 +62,7 @@ const cardData: BentoCardProps[] = [
     title: 'Automation',
     description: 'Streamline workflows',
     label: 'Efficiency',
-    imageSrc: '/assets/images/header.png',
+    imageSrc: '/assets/images/foto1.png',
     imageFit: 'cover'
   },
   {
@@ -70,7 +70,7 @@ const cardData: BentoCardProps[] = [
     title: 'Integration',
     description: 'Connect favorite tools',
     label: 'Connectivity',
-    imageSrc: '/assets/images/header.png',
+    imageSrc: '/assets/images/foto1.png',
     imageFit: 'cover'
   },
   {
@@ -78,7 +78,7 @@ const cardData: BentoCardProps[] = [
     title: 'Security',
     description: 'Enterprise-grade protection',
     label: 'Protection',
-    imageSrc: '/assets/images/header.png',
+    imageSrc: '/assets/images/foto1.png',
     imageFit: 'cover'
   }
 ];
