@@ -1,6 +1,14 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 export default function Register() {
+  const navigate = useNavigate()
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // TODO: Add real registration here
+    navigate('/landing')
+  }
+
   return (
     <div className="min-h-dvh grid md:grid-cols-2">
       <LeftPanel heading="Create new account" sub="Start for free" />
@@ -13,7 +21,7 @@ export default function Register() {
               <Link className="text-[#FF2000] font-medium hover:underline" to="/login">Log in</Link>
             </p>
           </header>
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={onSubmit}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700" htmlFor="first">First name</label>

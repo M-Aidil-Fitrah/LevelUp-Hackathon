@@ -1,6 +1,14 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 export default function Login() {
+  const navigate = useNavigate()
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // TODO: Add real auth here
+    navigate('/landing')
+  }
+
   return (
     <div className="min-h-dvh grid md:grid-cols-2">
       <LeftPanel heading="Welcome back" sub="Log in to continue" />
@@ -13,7 +21,7 @@ export default function Login() {
               <Link className="text-[#FF2000] font-medium hover:underline" to="/register">Create an account</Link>
             </p>
           </header>
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={onSubmit}>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700" htmlFor="email">Email</label>
               <input id="email" type="email" placeholder="you@example.com" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#FF2000]/60" />
