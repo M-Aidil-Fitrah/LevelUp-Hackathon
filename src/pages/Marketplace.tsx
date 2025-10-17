@@ -11,7 +11,8 @@ type Product = {
   id: number;
   name: string;
   category: Category;
-  price: number; // in IDR thousands for demo
+  priceMin: number; // in IDR thousands for demo (rentang harga)
+  priceMax: number; // in IDR thousands for demo (rentang harga)
   distanceKm: number;
   imageUrl: string;
   description?: string;
@@ -22,7 +23,8 @@ const DATA: Product[] = [
     id: 1,
     name: "Toko Batik Solo Pak Jono",
     category: "fashion",
-    price: 450,
+    priceMin: 200,
+    priceMax: 750,
     distanceKm: 2.1,
   imageUrl: "/assets/images/foto1.png",
     description: "Batik tulis motif klasik, karya UMKM lokal.",
@@ -31,7 +33,8 @@ const DATA: Product[] = [
     id: 2,
     name: "Toko Keripik Bu Sari",
     category: "kuliner",
-    price: 25,
+    priceMin: 25,
+    priceMax: 100,
     distanceKm: 3.5,
   imageUrl: "/assets/images/foto1.png",
     description: "Cemilan garing rasa pedas gurih.",
@@ -40,7 +43,8 @@ const DATA: Product[] = [
     id: 3,
     name: "Toko Rajut Ibu Rina",
     category: "kerajinan",
-    price: 180,
+    priceMin: 80,
+    priceMax: 300,
     distanceKm: 1.2,
   imageUrl: "/assets/images/foto1.png",
     description: "Tas rajut unik berbagai warna.",
@@ -49,7 +53,8 @@ const DATA: Product[] = [
     id: 4,
     name: "Toko Cuci Sepatu Pak Arif",
     category: "usaha",
-    price: 40,
+    priceMin: 20,
+    priceMax: 80,
     distanceKm: 5.2,
   imageUrl: "/assets/images/foto1.png",
     description: "Layanan bersih maksimal untuk sepatu kesayangan.",
@@ -58,7 +63,8 @@ const DATA: Product[] = [
     id: 5,
     name: "Toko Kue Bu Lina",
     category: "kuliner",
-    price: 220,
+    priceMin: 50,
+    priceMax: 300,
     distanceKm: 4.1,
   imageUrl: "/assets/images/foto1.png",
     description: "Lapis legit premium buatan rumahan.",
@@ -67,7 +73,8 @@ const DATA: Product[] = [
     id: 6,
     name: "Toko Aksesoris Mak Tuti",
     category: "kerajinan",
-    price: 90,
+    priceMin: 20,
+    priceMax: 150,
     distanceKm: 2.8,
   imageUrl: "/assets/images/foto1.png",
     description: "Aksesoris handmade khas nusantara.",
@@ -76,7 +83,8 @@ const DATA: Product[] = [
     id: 7,
     name: "Toko Tenun Pak Agus",
     category: "fashion",
-    price: 370,
+    priceMin: 150,
+    priceMax: 600,
     distanceKm: 3.3,
   imageUrl: "/assets/images/foto1.png",
     description: "Outer stylish berbahan tenun ikat.",
@@ -85,7 +93,8 @@ const DATA: Product[] = [
     id: 8,
     name: "Toko Kopi Pak Dedi",
     category: "lainnya",
-    price: 65,
+    priceMin: 30,
+    priceMax: 150,
     distanceKm: 6.7,
   imageUrl: "/assets/images/foto1.png",
     description: "Biji kopi robusta sangrai medium.",
@@ -94,18 +103,20 @@ const DATA: Product[] = [
     id: 9,
     name: "Toko Mukena Hj. Siti",
     category: "fashion",
-    price: 310,
+    priceMin: 200,
+    priceMax: 500,
     distanceKm: 1.9,
-    imageUrl: "/assets/foto1.png",
+    imageUrl: "/assets/images/foto1.png",
     description: "Mukena adem dan nyaman dipakai.",
   },
   {
     id: 10,
     name: "Toko Nasi Box Mba Yuni",
     category: "kuliner",
-    price: 35,
+    priceMin: 25,
+    priceMax: 100,
     distanceKm: 7.5,
-    imageUrl: "/assets/foto1.png",
+    imageUrl: "/assets/images/foto1.png",
     description: "Paket nasi lengkap untuk acara.",
   },
 ];
@@ -132,10 +143,10 @@ export default function Marketplace() {
 
     switch (sortBy) {
       case "price-asc":
-        items = items.sort((a, b) => a.price - b.price);
+        items = items.sort((a, b) => a.priceMin - b.priceMin);
         break;
       case "price-desc":
-        items = items.sort((a, b) => b.price - a.price);
+        items = items.sort((a, b) => b.priceMax - a.priceMax);
         break;
       case "distance":
         items = items.sort((a, b) => a.distanceKm - b.distanceKm);
@@ -183,9 +194,12 @@ export default function Marketplace() {
         accentColor="#FF2000"
       />
 
-      <div className="mx-auto max-w-7xl px-4 py-8">
+      {/* Spacer agar ada jarak dengan navbar sticky */}
+      <div className="h-16 md:h-20" />
+
+      <div className="mx-auto max-w-7xl px-4 pb-8">
         <h1 className="text-3xl font-bold tracking-tight">Marketplace</h1>
-        <p className="text-gray-500 mt-1">Jelajahi produk UMKM di sekitarmu.</p>
+        <p className="text-gray-500 mt-1">Jelajahi Toko UMKM di sekitarmu.</p>
 
         {/* Filters */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -256,14 +270,13 @@ export default function Marketplace() {
                 key={item.id}
                 imageUrl={item.imageUrl}
                 className="w-full h-64 md:h-80"
+                showTextAlways={true}
+                childrenClassName="text-white absolute bottom-4 left-4 z-40 px-3 py-2 rounded-md shadow-sm"
               >
                 <div>
-                  <p className="font-semibold text-lg drop-shadow-sm text--white">
-                    {item.name}
-                  </p>
-                  <p className="text-sm opacity-90 text-white">
-                    Rp{(item.price * 1000).toLocaleString("id-ID")} · {item.distanceKm}
-                    km · {capitalize(item.category)}
+                  <p className="font-semibold text-lg">{item.name}</p>
+                  <p className="text-sm">
+                    Rp{(item.priceMin * 1000).toLocaleString("id-ID")} - Rp{(item.priceMax * 1000).toLocaleString("id-ID")} · {item.distanceKm}km · {capitalize(item.category)}
                   </p>
                 </div>
               </DirectionAwareHover>
@@ -277,7 +290,7 @@ export default function Marketplace() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-2 rounded-md border text-sm disabled:opacity-40 hover:bg-gray-50"
+              className="px-3 py-2 rounded-md border text-sm disabled:opacity-40"
             >
               Prev
             </button>
