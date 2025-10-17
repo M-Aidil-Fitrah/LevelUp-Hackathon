@@ -46,7 +46,7 @@ export default function Login() {
 
       if (response.ok && result.token){
         localStorage.setItem("token", result.token);
-        localStorage.setItem("user", JSON.stringify(result.user))
+        localStorage.setItem("user", JSON.stringify(result.data))
         // Notify app about auth change (for components that listen)
         try { window.dispatchEvent(new Event('auth-changed')); } catch {}
         toast.success('Login berhasil. Selamat datang!');
