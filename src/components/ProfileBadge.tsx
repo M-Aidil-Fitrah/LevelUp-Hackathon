@@ -136,9 +136,9 @@ export const ProfileBadge: React.FC<ProfileBadgeProps> = ({ variant = "desktop" 
             </div>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 capitalize">
-                {role === "buyer" && "🛍️ Buyer"}
-                {role === "seller" && "🏪 Seller"}
-                {role === "admin" && "👑 Admin"}
+                {role === "buyer" && "Buyer"}
+                {role === "seller" && "Seller"}
+                {role === "admin" && "Admin"}
               </span>
             </div>
           </div>
