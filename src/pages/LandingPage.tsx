@@ -1,5 +1,5 @@
 import Hero from "@/components/Hero";
-import PillNav from "@/components/ui/PillNav";
+import PillNav from "@/components/PillNav";
 import MagicBento from "@/components/MagicBento";
 import { useLocation } from "react-router-dom";
 import InfiniteMarquee from "@/components/InfiniteMarquee";

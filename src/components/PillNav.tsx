@@ -251,6 +251,12 @@ const PillNav: React.FC<PillNavProps> = ({
     ['--pill-gap']: '3px'
   } as React.CSSProperties;
 
+  // Split items: auth (Register/Login) vs main
+  const isAuthItem = (item: PillNavItem) =>
+    item.variant === 'accent' || /^(register|login)$/i.test(item.label?.trim());
+  const mainItems = items.filter(i => !isAuthItem(i));
+  const authItems = items.filter(i => isAuthItem(i));
+
   return (
     <div
       className="sticky top-4 z-[1000] w-full flex justify-center"
@@ -311,7 +317,7 @@ const PillNav: React.FC<PillNavProps> = ({
             className="list-none flex items-stretch m-0 p-[3px] h-full"
             style={{ gap: 'var(--pill-gap)' }}
           >
-            {items.map((item, i) => {
+            {mainItems.map((item, i) => {
               const isActive = activeHref === item.href;
               const isAccent =
                 item.variant === 'accent' || /^(register|login)$/i.test(item.label?.trim());
@@ -408,6 +414,8 @@ const PillNav: React.FC<PillNavProps> = ({
           </ul>
         </div>
 
+        {/* End of centered main nav */}
+
         <button
           ref={hamburgerRef}
           onClick={toggleMobileMenu}
@@ -430,6 +438,93 @@ const PillNav: React.FC<PillNavProps> = ({
           />
         </button>
       </nav>
+
+      {/* Auth group (Register/Login) pinned to top-right; visuals unchanged */}
+      {authItems.length > 0 && (
+        <div
+          className="hidden md:flex items-center absolute right-4 top-0"
+          style={{ height: 'var(--nav-h)' }}
+        >
+          <ul className="list-none flex items-stretch m-0 p-[3px] h-full" style={{ gap: 'var(--pill-gap)' }}>
+            {authItems.map((item, i) => {
+              const index = i + mainItems.length; // continue index for GSAP timelines
+              const isActive = activeHref === item.href;
+              const pillStyle: React.CSSProperties = {
+                background: accentColor,
+                color: '#fff',
+                paddingLeft: 'var(--pill-pad-x)',
+                paddingRight: 'var(--pill-pad-x)',
+                ['--hover-text' as any]: '#fff'
+              };
+
+              const PillContent = (
+                <>
+                  <span
+                    className="hover-circle absolute left-1/2 bottom-0 rounded-full z-[1] block pointer-events-none"
+                    style={{ background: 'var(--base, #000)', willChange: 'transform' }}
+                    aria-hidden="true"
+                    ref={el => {
+                      circleRefs.current[index] = el;
+                    }}
+                  />
+                  <span className="label-stack relative inline-block leading-[1] z-[2]">
+                    <span className="pill-label relative z-[2] inline-block leading-[1]" style={{ willChange: 'transform' }}>
+                      {item.label}
+                    </span>
+                    <span
+                      className="pill-label-hover absolute left-0 top-0 z-[3] inline-block"
+                      style={{ color: 'var(--hover-text, #fff)', willChange: 'transform, opacity' }}
+                      aria-hidden="true"
+                    >
+                      {item.label}
+                    </span>
+                  </span>
+                  {isActive && (
+                    <span
+                      className="absolute left-1/2 -bottom-[6px] -translate-x-1/2 w-3 h-3 rounded-full z-[4]"
+                      style={{ background: 'var(--base, #000)' }}
+                      aria-hidden="true"
+                    />
+                  )}
+                </>
+              );
+
+              const linkClasses =
+                'relative overflow-hidden inline-flex items-center justify-center h-full no-underline rounded-full box-border font-semibold text-[16px] leading-[0] uppercase tracking-[0.2px] whitespace-nowrap cursor-pointer px-0';
+
+              return (
+                <li key={item.href} role="none" className="flex h-full">
+                  {isRouterLink(item.href) ? (
+                    <Link
+                      role="menuitem"
+                      to={item.href}
+                      className={linkClasses}
+                      style={pillStyle}
+                      aria-label={item.ariaLabel || item.label}
+                      onMouseEnter={() => handleEnter(index)}
+                      onMouseLeave={() => handleLeave(index)}
+                    >
+                      {PillContent}
+                    </Link>
+                  ) : (
+                    <a
+                      role="menuitem"
+                      href={item.href}
+                      className={linkClasses}
+                      style={pillStyle}
+                      aria-label={item.ariaLabel || item.label}
+                      onMouseEnter={() => handleEnter(index)}
+                      onMouseLeave={() => handleLeave(index)}
+                    >
+                      {PillContent}
+                    </a>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       <div
         ref={mobileMenuRef}
