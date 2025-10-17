@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import type { CSSProperties } from 'react';
 import { Renderer, Program, Mesh, Color, Triangle } from 'ogl';
 
 const VERT = `#version 300 es
@@ -16,6 +17,8 @@ uniform float uAmplitude;
 uniform vec3 uColorStops[3];
 uniform vec2 uResolution;
 uniform float uBlend;
+uniform float uYScale;
+uniform float uYOffset;
 
 out vec4 fragColor;
 
@@ -84,6 +87,8 @@ struct ColorStop {
 
 void main() {
   vec2 uv = gl_FragCoord.xy / uResolution;
+  // Control vertical placement and scale so we can push the aurora further down
+  float y = uv.y * uYScale + uYOffset;
   
   ColorStop colors[3];
   colors[0] = ColorStop(uColorStops[0], 0.0);
@@ -95,7 +100,8 @@ void main() {
   
   float height = snoise(vec2(uv.x * 2.0 + uTime * 0.1, uTime * 0.25)) * 0.5 * uAmplitude;
   height = exp(height);
-  height = (uv.y * 2.0 - height + 0.2);
+  // Use adjusted y to push the wave down and extend the perceived length
+  height = (y * 2.0 - height + 0.2);
   float intensity = 0.6 * height;
   
   float midPoint = 0.20;
@@ -113,6 +119,10 @@ interface AuroraProps {
   blend?: number;
   time?: number;
   speed?: number;
+  yScale?: number; // scale uv.y to stretch/compress vertically
+  yOffset?: number; // shift vertically (negative moves down)
+  className?: string;
+  style?: CSSProperties;
 }
 
 export default function Aurora(props: AuroraProps) {
@@ -168,7 +178,9 @@ export default function Aurora(props: AuroraProps) {
         uAmplitude: { value: amplitude },
         uColorStops: { value: colorStopsArray },
         uResolution: { value: [ctn.offsetWidth, ctn.offsetHeight] },
-        uBlend: { value: blend }
+        uBlend: { value: blend },
+        uYScale: { value: propsRef.current.yScale ?? 0.85 },
+        uYOffset: { value: propsRef.current.yOffset ?? -0.06 }
       }
     });
 
@@ -183,6 +195,8 @@ export default function Aurora(props: AuroraProps) {
         program.uniforms.uTime.value = time * speed * 0.1;
         program.uniforms.uAmplitude.value = propsRef.current.amplitude ?? 1.0;
         program.uniforms.uBlend.value = propsRef.current.blend ?? blend;
+        program.uniforms.uYScale.value = propsRef.current.yScale ?? 0.85;
+        program.uniforms.uYOffset.value = propsRef.current.yOffset ?? -0.06;
         const stops = propsRef.current.colorStops ?? colorStops;
         program.uniforms.uColorStops.value = stops.map((hex: string) => {
           const c = new Color(hex);
@@ -205,5 +219,5 @@ export default function Aurora(props: AuroraProps) {
     };
   }, [amplitude]);
 
-  return <div ref={ctnDom} className="w-full h-full" />;
+  return <div ref={ctnDom} className={props.className ?? "w-full h-full"} style={props.style} />;
 }
