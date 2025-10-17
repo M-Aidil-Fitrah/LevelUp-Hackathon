@@ -11,12 +11,14 @@ export const DirectionAwareHover = ({
   childrenClassName,
   imageClassName,
   className,
+  showTextAlways = false,
 }: {
   imageUrl: string;
   children: React.ReactNode | string;
   childrenClassName?: string;
   imageClassName?: string;
   className?: string;
+  showTextAlways?: boolean;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -73,7 +75,7 @@ export const DirectionAwareHover = ({
       <AnimatePresence mode="wait">
         <motion.div
           className="relative h-full w-full"
-          initial="initial"
+          initial={showTextAlways ? direction : "initial"}
           whileHover={direction}
           exit="exit"
         >
