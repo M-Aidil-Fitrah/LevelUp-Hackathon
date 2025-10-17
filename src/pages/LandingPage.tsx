@@ -1,8 +1,16 @@
 import Hero from "@/components/Hero";
-import PillNav from "@/components/ui/PillNav";
+import PillNav from "@/components/PillNav";
 import MagicBento from "@/components/MagicBento";
+import FlowingMenu from "@/components/FlowingMenu";
 import { useLocation } from "react-router-dom";
 import InfiniteMarquee from "@/components/InfiniteMarquee";
+import { Footer } from "@/components/Footer";
+
+const demoItems = [
+  { link: '#', text: 'Marketplace', image: 'https://picsum.photos/600/400?random=1' },
+  { link: '#', text: 'UMKM Nearby', image: 'https://picsum.photos/600/400?random=2' },
+  { link: '#', text: 'Chatbot AI', image: 'https://picsum.photos/600/400?random=3' },
+];
 
 const LandingPage = () => {
       const location = useLocation();
@@ -28,9 +36,9 @@ const LandingPage = () => {
         pillTextColor="#000000"
         accentColor="#FF2000"
       />
-  <Hero />
-  <InfiniteMarquee className="mt-6" text="Marketplace - UMKM Nearby - Chatbot AI" direction="right" duration={30} />
-    <MagicBento 
+      <Hero />
+      <InfiniteMarquee className="mt-6" text="Marketplace - UMKM Nearby - Chatbot AI" direction="right" duration={30} />
+      <MagicBento 
         textAutoHide={true}
         enableStars={true}
         enableSpotlight={true}
@@ -42,6 +50,10 @@ const LandingPage = () => {
         particleCount={12}
         glowColor="255, 32, 0"
       />
+      <div className="relative mt-6">
+        <FlowingMenu items={demoItems} />
+      </div>
+      <Footer />
     </div>
   );
 };

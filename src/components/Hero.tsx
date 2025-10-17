@@ -1,4 +1,4 @@
-import { TextGenerateEffect } from "@/components/text-generate-effect";
+import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
 
 const Hero = () => {
   return (
