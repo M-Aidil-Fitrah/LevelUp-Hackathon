@@ -1,6 +1,6 @@
 import Hero from "@/components/Hero";
-import PillNav from "@/components/PillNav";
-import MagicBento from "@/components/MagicBento";
+import PillNav from "@/components/ui/PillNav";
+import MagicBento from "@/components/ui/MagicBento";
 import { useLocation } from "react-router-dom";
 
 const LandingPage = () => {
