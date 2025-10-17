@@ -336,17 +336,17 @@ export default function MarketplaceProduct() {
                     <div>
                       <motion.h3
                         layoutId={`title-${active.id}-${id}`}
-                        className="font-semibold text-neutral-800 dark:text-neutral-200 text-lg"
+                        className="font-semibold text-white text-lg"
                       >
                         {active.name}
                       </motion.h3>
                       <motion.p
                         layoutId={`description-${active.id}-${id}`}
-                        className="text-neutral-600 dark:text-neutral-400 text-sm"
+                        className="text-neutral-200 text-sm"
                       >
                         {active.description}
                       </motion.p>
-                      <div className="mt-2 text-sm text-neutral-700 dark:text-neutral-300">
+                      <div className="mt-2 text-sm text-neutral-300">
                         <p>
                           Harga: Rp{(active.price * 1000).toLocaleString("id-ID")}
                         </p>
@@ -386,7 +386,7 @@ export default function MarketplaceProduct() {
         </AnimatePresence>
 
         {/* List menggunakan expandable standard: preview hanya nama, foto, harga */}
-        <ul className="mt-6 max-w-3xl mx-auto w-full gap-4">
+  <ul className="mt-6 mx-auto w-full gap-4 max-w-5xl md:max-w-6xl">
           {!selectedStore ? (
             <li className="text-center text-gray-500 py-16">
               Belum ada toko terpilih.
@@ -399,7 +399,7 @@ export default function MarketplaceProduct() {
                 layoutId={`card-${item.id}-${id}`}
                 key={`card-${item.id}`}
                 onClick={() => setActive(item)}
-                className="p-4 flex flex-col md:flex-row justify-between items-center hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl cursor-pointer border border-gray-200"
+                className="p-4 flex flex-col md:flex-row justify-between items-center bg-white hover:bg-neutral-100 rounded-xl cursor-pointer border border-gray-200"
               >
                 <div className="flex gap-4 flex-col md:flex-row items-center">
                   <motion.div layoutId={`image-${item.id}-${id}`}>
@@ -414,13 +414,13 @@ export default function MarketplaceProduct() {
                   <div>
                     <motion.h3
                       layoutId={`title-${item.id}-${id}`}
-                      className="font-medium text-neutral-800 dark:text-neutral-200 text-center md:text-left"
+                      className="font-medium text-neutral-900 text-center md:text-left"
                     >
                       {item.name}
                     </motion.h3>
                     <motion.p
                       layoutId={`description-${item.id}-${id}`}
-                      className="text-neutral-600 dark:text-neutral-400 text-center md:text-left"
+                      className="text-neutral-700 text-center md:text-left"
                     >
                       Rp{(item.price * 1000).toLocaleString("id-ID")}
                     </motion.p>
