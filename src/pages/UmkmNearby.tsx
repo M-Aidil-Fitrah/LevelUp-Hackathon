@@ -66,7 +66,7 @@ export default function UmkmNearby() {
   const Highlight = ({ text, query, className, strong = false }: { text?: string; query: string; className?: string; strong?: boolean }) => {
     if (!text) return null;
     const q = query.trim();
-    if (!q) return <span className={className}>{strong ? <strong>{text}</strong> : text}</span>;
+    if (!q) return <span className={className}>{strong ? <strong className="text-orange-500">{text}</strong> : text}</span>;
     const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const re = new RegExp(`(${escapeRegExp(q)})`, 'ig');
     const parts = text.split(re);
@@ -74,7 +74,7 @@ export default function UmkmNearby() {
       <span className={className}>
         {parts.map((part, idx) =>
           re.test(part)
-            ? <strong key={idx}>{part}</strong>
+            ? <strong key={idx} className="text-orange-500">{part}</strong>
             : <span key={idx}>{part}</span>
         )}
       </span>
@@ -110,6 +110,15 @@ export default function UmkmNearby() {
       setLocationStatus('denied');
     }
   }, []);
+
+  // Allowed categories (by name)
+  const allowedCategoryNames = useMemo(() => [
+    'Makanan & Minuman',
+    'Fashion & Pakaian',
+    'Kerajinan Tangan',
+    'Elektronik',
+    'Jasa & Layanan',
+  ], []);
 
   // Fetch categories
   useEffect(() => {
@@ -196,6 +205,13 @@ export default function UmkmNearby() {
     []
   );
 
+  // Build category names to show (restricted to allowed list, fallback to static if API missing)
+  const categoryNamesToShow = useMemo(() => {
+    const namesFromApi = categories.map(c => c.nama_kategori).filter(Boolean);
+    const filtered = allowedCategoryNames.filter(name => namesFromApi.includes(name));
+    return (filtered.length ? filtered : allowedCategoryNames);
+  }, [categories, allowedCategoryNames]);
+
   // Suggestions based on search text
   type Suggestion =
     | { type: 'umkm'; id: string; label: string; lat: number; lng: number; alamat?: string; kategori?: string }
@@ -224,10 +240,10 @@ export default function UmkmNearby() {
       }
     }
 
-    const catMatches: Suggestion[] = categories
-      .filter((c) => c.nama_kategori.toLowerCase().includes(q))
+    const catMatches: Suggestion[] = categoryNamesToShow
+      .filter((name) => name.toLowerCase().includes(q))
       .slice(0, 10)
-      .map((c) => ({ type: 'kategori', id: c._id, label: c.nama_kategori }));
+      .map((name) => ({ type: 'kategori', id: name, label: name }));
 
     // Prioritize UMKM, then addresses, then categories
     return [...byName, ...byAddr, ...catMatches].slice(0, 12);
@@ -294,7 +310,8 @@ export default function UmkmNearby() {
     let items = umkms.filter(hasValidCoords);
 
     if (selectedCategory !== 'all') {
-      items = items.filter((i) => i.kategori_id === selectedCategory);
+      // Match either by kategori name or kategori_id (supports both API ids and fixed names)
+      items = items.filter((i) => i.kategori === selectedCategory || i.kategori_id === selectedCategory);
     }
 
     if (search.trim()) {
@@ -419,15 +436,15 @@ export default function UmkmNearby() {
               )}
             </div>
 
-            {/* Category */}
+            {/* Category (restricted to specified list) */}
             <select
               className="w-full rounded-lg bg-[#111111] text-white border border-[#2A2A2A] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FF2000]"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
               <option value="all">Semua Kategori</option>
-              {categories.map((cat) => (
-                <option key={cat._id} value={cat._id}>{cat.nama_kategori}</option>
+              {categoryNamesToShow.map((name) => (
+                <option key={name} value={name}>{name}</option>
               ))}
             </select>
 
@@ -505,7 +522,7 @@ export default function UmkmNearby() {
 
       {/* Cards Carousel (shown after Enter) */}
       {showCards && cardResults.length > 0 && (
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-24 z-[1000] w-[96%] max-w-5xl">
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-6 z-[1000] w-[98%] max-w-7xl">
           <div className="bg-[#171717] text-white border border-[#2A2A2A] rounded-xl p-3 shadow-lg relative">
             <button
               onClick={() => setShowCards(false)}
@@ -530,21 +547,33 @@ export default function UmkmNearby() {
                   const imgSrc = i.thumbnail || 'https://placehold.co/400x240?text=UMKM';
                   const distance = userLocation ? distanceKm(userLocation, { lat: i.latitude, lng: i.longitude }) : null;
                   return (
-                    <button
+                    <div
                       key={i._id}
-                      onClick={() => { setSelectedUmkmId(i._id); setFlyTarget([i.latitude, i.longitude]); }}
-                      className="min-w-[280px] snap-center bg-[#111111] border border-[#2A2A2A] rounded-lg overflow-hidden text-left hover:brightness-110"
+                      className="min-w-[320px] snap-center bg-[#111111] border border-[#2A2A2A] rounded-lg overflow-hidden hover:brightness-110"
                     >
-                      <img src={imgSrc} alt={i.nama_umkm} className="w-full h-40 object-cover" />
-                      <div className="p-3">
-                        <div className="font-semibold text-white mb-1 line-clamp-1">{i.nama_umkm}</div>
-                        <div className="text-xs text-gray-400 line-clamp-2">{i.alamat || 'Belum ada deskripsi'}</div>
-                        <div className="mt-2 flex items-center justify-between text-xs text-gray-300">
-                          <div className="flex items-center gap-1"><Tag size={14} /> {i.kategori || '-'}</div>
-                          {distance !== null && (<div>{distance.toFixed(1)} km</div>)}
+                      <button
+                        onClick={() => { setSelectedUmkmId(i._id); setFlyTarget([i.latitude, i.longitude]); }}
+                        className="block w-full text-left"
+                      >
+                        <img src={imgSrc} alt={i.nama_umkm} className="w-full h-44 object-cover" />
+                        <div className="p-3">
+                          <div className="font-semibold text-white mb-1 line-clamp-1">{i.nama_umkm}</div>
+                          <div className="text-xs text-gray-400 line-clamp-2">{i.alamat || 'Belum ada deskripsi'}</div>
+                          <div className="mt-2 flex items-center justify-between text-xs text-gray-300">
+                            <div className="flex items-center gap-1"><Tag size={14} /> {i.kategori || '-'}</div>
+                            {distance !== null && (<div>{distance.toFixed(1)} km</div>)}
+                          </div>
                         </div>
+                      </button>
+                      <div className="px-3 pb-3">
+                        <button
+                          onClick={() => navigate(`/marketplace/${i._id}`)}
+                          className="w-full text-sm bg-[#FF2000] hover:brightness-110 text-white rounded-md py-2 transition"
+                        >
+                          Lihat Toko
+                        </button>
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -560,12 +589,7 @@ export default function UmkmNearby() {
         </div>
       )}
 
-      {/* Bottom badge with count */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000]">
-        <div className="bg-[#171717] text-white backdrop-blur-md border border-[#2A2A2A] shadow-lg rounded-full px-4 py-2 text-sm">
-          Menampilkan {filtered.length} UMKM
-        </div>
-      </div>
+      {/* Removed bottom badge to allow carousel sit lower */}
     </div>
   );
 }
