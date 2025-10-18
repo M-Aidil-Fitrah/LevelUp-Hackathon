@@ -1,7 +1,7 @@
 import './App.css'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import Login from './pages/Login'
-import Register from './pages/Register'
+import Login from './pages/auth/Login'
+import Register from './pages/auth/Register'
 import LandingPage from './pages/LandingPage'
 import ChatbotAI from './pages/ChatbotAI'
 import ChatBubble from './components/chatbot/ChatBubble'
@@ -9,12 +9,12 @@ import Marketplace from './pages/Marketplace'
 import MarketplaceProduct from './pages/MarketplaceProduct'
 import ProductDetail from './pages/ProductDetail'
 import UpgradeToSeller from './pages/UpgradeToSeller'
-import AdminDashboard from './pages/admin/AdminDashboard'
-import LoginAdmin from './pages/admin/LoginAdmin'
 import SellerDashboard from './pages/seller/SellerDashboard'
 import AddProductPage from './pages/seller/AddProduct'
 import EditProductPage from './pages/seller/EditProduct'
 import DeleteProductPage from './pages/seller/DeleteProduct'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import VerifySellerPage from './pages/admin/VerifySeller'
 
 function AppShell() {
 	const location = useLocation();
@@ -34,11 +34,10 @@ function AppShell() {
 				<Route path="/seller/add" element={<AddProductPage />} />
 				<Route path="/seller/edit" element={<EditProductPage />} />
 				<Route path="/seller/delete" element={<DeleteProductPage />} />
+				<Route path="/admin/dashboard" element={<AdminDashboard />} />
+				<Route path="/admin/verify-seller" element={<VerifySellerPage />} />
 				<Route path="*" element={<Navigate to="/" replace />} />
 
-				{/* Admin routes */}
-				 <Route path="/admin/login" element={<LoginAdmin />} />
-        		<Route path="/admin/dashboard" element={<AdminDashboard />} />
 			</Routes>
 			{!hideChat && <ChatBubble />}
 		</>
