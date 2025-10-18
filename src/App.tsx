@@ -17,6 +17,7 @@ const EditProductPage = React.lazy(() => import('./pages/seller/EditProduct'))
 const DeleteProductPage = React.lazy(() => import('./pages/seller/DeleteProduct'))
 const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'))
 const VerifySellerPage = React.lazy(() => import('./pages/admin/VerifySeller'))
+const VerifySellerDetailPage = React.lazy(() => import('./pages/admin/VerifySellerDetail'))
 
 function AppShell() {
 	const location = useLocation();
@@ -46,6 +47,7 @@ function AppShell() {
 				<Route path="/seller/delete" element={<DeleteProductPage />} />
 				<Route path="/admin/dashboard" element={<AdminDashboard />} />
 				<Route path="/admin/verify-seller" element={<VerifySellerPage />} />
+				<Route path="/admin/verify-seller/:id" element={<VerifySellerDetailPage />} />
 				<Route path="*" element={<Navigate to="/" replace />} />
 
 			</Routes>
