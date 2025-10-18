@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/components/ui/Toast';
-import { ArrowLeft, CheckCircle, XCircle, Loader2, MapPin, Phone, Mail, FileText, Image as ImageIcon, Building2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Loader2, MapPin, Phone, Mail, FileText, Building2 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
