@@ -9,6 +9,8 @@ import Marketplace from './pages/Marketplace'
 import MarketplaceProduct from './pages/MarketplaceProduct'
 import ProductDetail from './pages/ProductDetail'
 import UpgradeToSeller from './pages/UpgradeToSeller'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import LoginAdmin from './pages/admin/LoginAdmin'
 
 function AppShell() {
 	const location = useLocation();
@@ -25,6 +27,10 @@ function AppShell() {
 				<Route path="/register" element={<Register />} />
 				<Route path="/upgrade-to-seller" element={<UpgradeToSeller />} />
 				<Route path="*" element={<Navigate to="/" replace />} />
+
+				{/* Admin routes */}
+				 <Route path="/admin/login" element={<LoginAdmin />} />
+        		<Route path="/admin/dashboard" element={<AdminDashboard />} />
 			</Routes>
 			{!hideChat && <ChatBubble />}
 		</>

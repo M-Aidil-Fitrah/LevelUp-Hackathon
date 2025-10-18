@@ -241,7 +241,8 @@ export default function MarketplaceProduct() {
         <h1 className="text-3xl font-bold tracking-tight">Produk Toko</h1>
         {selectedStore ? (
           <p className="text-gray-500 mt-1">
-            {selectedStore.name} · {capitalize(selectedStore.category)} · {selectedStore.distanceKm}km
+            {selectedStore.name} · {capitalize(selectedStore.category)} · {selectedStore.distanceKm}km <br></br>
+            {selectedStore.address}
           </p>
         ) : (
           <p className="text-gray-500 mt-1">Silakan pilih toko dari halaman Marketplace.</p>
@@ -350,10 +351,6 @@ export default function MarketplaceProduct() {
                         <p>
                           Harga: Rp{(active.price * 1000).toLocaleString("id-ID")}
                         </p>
-                        <p>
-                          Jarak: {active.distanceKm}km · Kategori: {capitalize(active.category)}
-                        </p>
-                        {active.address && <p>Alamat: {active.address}</p>}
                       </div>
                     </div>
 
