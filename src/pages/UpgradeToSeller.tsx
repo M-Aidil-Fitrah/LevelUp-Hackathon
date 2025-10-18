@@ -1,8 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Store, Package, MapPin, Wallet, BarChart3, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
-import { loadApplications, saveApplications, type SellerApplication } from '@/lib/adminStorage';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix Leaflet default marker icon issue
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+interface Category {
+    _id: string;
+    nama_kategori: string;
+}
+
+// Map click handler component
+function LocationMarker({ 
+    position, 
+    setPosition, 
+    setAddress 
+}: { 
+    position: [number, number] | null;
+    setPosition: (pos: [number, number]) => void;
+    setAddress: (addr: string) => void;
+}) {
+    useMapEvents({
+        click(e) {
+            const newPos: [number, number] = [e.latlng.lat, e.latlng.lng];
+            setPosition(newPos);
+            
+            // Reverse geocoding using Nominatim
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.display_name) {
+                        setAddress(data.display_name);
+                    }
+                })
+                .catch(err => console.error('Geocoding error:', err));
+        },
+    });
+
+    return position ? <Marker position={position} /> : null;
+}
 
 export default function UpgradeToSeller() {
     const navigate = useNavigate();
@@ -11,18 +56,76 @@ export default function UpgradeToSeller() {
     const [agreed, setAgreed] = useState(false);
     const { toast } = useToast();
 
-    const API_URL = import.meta.env.VITE_API_URL;
+    const API_URL = 'https://levelup-backend-production-839e.up.railway.app/api';
 
-    // Form state
+    // Form state - Personal Info
     const [fullName, setFullName] = useState("");
-    const [storeName, setStoreName] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
-    const [storeAddress, setStoreAddress] = useState("");
-    const [storeCategory, setStoreCategory] = useState("");
-    const [storeDescription, setStoreDescription] = useState("");
-    const [ktpFile, setKtpFile] = useState<File | null>(null);
-    const [businessIdFile, setBusinessIdFile] = useState<File | null>(null);
+    
+    // Form state - UMKM Info
+    const [namaUmkm, setNamaUmkm] = useState("");
+    const [caption, setCaption] = useState("");
+    const [alamat, setAlamat] = useState("");
+    const [categoryId, setCategoryId] = useState("");
+    
+    // Location state
+    const [mapPosition, setMapPosition] = useState<[number, number]>([5.5418, 95.3413]); // Default: Banda Aceh
+    const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
+    
+    // Files
+    const [idCardFile, setIdCardFile] = useState<File | null>(null);
+    const [businessPermitFile, setBusinessPermitFile] = useState<File | null>(null);
+    const [fotoFile, setFotoFile] = useState<File | null>(null);
+    
+    // Categories
+    const [categories, setCategories] = useState<Category[]>([]);
+
+    // Get user's current location
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const pos: [number, number] = [position.coords.latitude, position.coords.longitude];
+                    setMapPosition(pos);
+                    setMarkerPosition(pos);
+                    
+                    // Get address from coordinates
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos[0]}&lon=${pos[1]}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.display_name) {
+                                setAlamat(data.display_name);
+                            }
+                        })
+                        .catch(err => console.error('Geocoding error:', err));
+                },
+                (error) => {
+                    console.error('Geolocation error:', error);
+                }
+            );
+        }
+    }, []);
+
+    // Fetch categories
+    useEffect(() => {
+        fetch(`${API_URL}/category/all`)
+            .then(res => res.json())
+            .then(result => {
+                if (result.data) {
+                    setCategories(result.data);
+                }
+            })
+            .catch(err => console.error('Error fetching categories:', err));
+    }, []);
+
+    const handleMapClick = (newPos: [number, number]) => {
+        setMarkerPosition(newPos);
+    };
+
+    const handleAddressFromMap = (addr: string) => {
+        setAlamat(addr);
+    };
 
     const handleUpgrade = async () => {
         if (!agreed) {
@@ -32,230 +135,292 @@ export default function UpgradeToSeller() {
             return;
         }
 
-        // Basic validation for required fields
-        if (!fullName || !storeName || !email || !phone || !storeAddress || !storeCategory || !storeDescription || !ktpFile || !businessIdFile) {
-            const msg = "Mohon lengkapi semua data dan unggah berkas yang diminta";
+        // Validation
+        if (!fullName || !email || !phone || !namaUmkm || !alamat || !categoryId || !markerPosition || !idCardFile || !businessPermitFile) {
+            const msg = "Mohon lengkapi semua data dan pilih lokasi di peta";
             setError(msg);
             toast.error(msg, { title: 'Validasi', duration: 4000 });
             return;
         }
 
-        try {
-            setLoading(true);
-            setError(null);
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            const msg = "Format email tidak valid";
+            setError(msg);
+            toast.error(msg, { title: 'Validasi', duration: 3500 });
+            return;
+        }
 
-            const token = localStorage.getItem('token');
-            if (!token || !API_URL) {
-                const msg = !token ? 'Anda belum login' : 'Konfigurasi API_URL belum diatur';
-                setError(msg);
-                toast.error(msg, { title: 'Kesalahan', duration: 4000 });
-                return;
-            }
+        // Phone validation
+        if (!/^08\d{8,11}$/.test(phone)) {
+            const msg = "Nomor HP harus diawali 08 dan 10-13 digit";
+            setError(msg);
+            toast.error(msg, { title: 'Validasi', duration: 3500 });
+            return;
+        }
 
-            const payload = {
-                fullName,
-                storeName,
-                email,
-                phone,
-                storeAddress,
-                storeCategory,
-                storeDescription,
-                documents: {
-                    ktp: ktpFile?.name || '',
-                    businessId: businessIdFile?.name || ''
-                }
-            };
+           try {
+        setLoading(true);
+        setError(null);
 
-                        const response = await fetch(`${API_URL}/user/upgrade-to-seller`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const result: any = await response.json().catch(() => ({}));
-
-            if (response.ok) {
-                if (result?.data?.token) localStorage.setItem('token', result.data.token);
-                if (result?.data?.user) localStorage.setItem('user', JSON.stringify(result.data.user));
-                window.dispatchEvent(new Event('auth-changed'));
-                toast.success('Selamat! Anda sekarang adalah seller', { title: 'Berhasil', duration: 3500 });
-                navigate('/');
-            } else {
-                const msg = result?.message || 'Gagal upgrade ke seller';
-                setError(msg);
-                toast.error(msg, { title: 'Gagal', duration: 4000 });
-            }
-        } catch (err: any) {
-            const msg = err?.message || 'Terjadi kesalahan tidak terduga';
+        const token = localStorage.getItem('token');
+        if (!token) {
+            const msg = 'Anda belum login. Silakan login terlebih dahulu';
             setError(msg);
             toast.error(msg, { title: 'Kesalahan', duration: 4000 });
-        } finally {
-            setLoading(false);
-            // Tambah pengajuan ke localStorage agar admin bisa melihat di halaman verifikasi
-            try {
-                const apps = loadApplications();
-                const exists = apps.some(a => a.email === email && (a.status ?? 'pending') === 'pending');
-                if (!exists) {
-                    const app: SellerApplication = {
-                        id: crypto.randomUUID(),
-                        email,
-                        fullname: fullName,
-                        storeName,
-                        createdAt: new Date().toISOString(),
-                        status: 'pending',
-                    };
-                    saveApplications([app, ...apps]);
-                }
-            } catch {}
+            navigate('/login');
+            return;
         }
-    };
 
+        // Prepare FormData
+        const formData = new FormData();
+        formData.append('full_name', fullName);
+        formData.append('email', email);
+        formData.append('phone', phone);
+        formData.append('nama_umkm', namaUmkm);
+        formData.append('caption', caption);
+        formData.append('latitude', markerPosition[0].toString());
+        formData.append('longitude', markerPosition[1].toString());
+        formData.append('alamat', alamat);
+        formData.append('category_id', categoryId);
+        formData.append('id_card', idCardFile);
+        formData.append('business_permit', businessPermitFile);
+        if (fotoFile) {
+            formData.append('foto', fotoFile);
+        }
+
+        console.log('📤 Sending verification request...');
+        console.log('📤 URL:', `${API_URL}/seller-verification/request`);
+        console.log('📤 Token:', token.substring(0, 20) + '...');
+
+        const response = await fetch(`${API_URL}/seller-verification/request`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        console.log('📡 Response status:', response.status);
+        console.log('📡 Response headers:', response.headers);
+
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const textResponse = await response.text();
+            console.error('❌ Non-JSON response:', textResponse);
+            throw new Error('Server mengembalikan response yang tidak valid. Cek console untuk detail.');
+        }
+
+        const result = await response.json();
+        console.log('📦 Response:', result);
+
+        if (response.ok) {
+            toast.success('Permintaan verifikasi berhasil! UMKM Anda akan dibuat setelah disetujui admin.', { 
+                title: 'Berhasil', 
+                duration: 5000 
+            });
+            navigate('/');
+        } else {
+            const msg = result?.message || 'Gagal mengirim permintaan verifikasi';
+            setError(msg);
+            toast.error(msg, { title: 'Gagal', duration: 4000 });
+        }
+    } catch (err: any) {
+        console.error('❌ Error:', err);
+        const msg = err?.message || 'Terjadi kesalahan tidak terduga';
+        setError(msg);
+        toast.error(msg, { title: 'Kesalahan', duration: 4000 });
+    } finally {
+        setLoading(false);
+    }
+};
     return (
-        <div className="h-screen w-screen bg-gray-50 flex flex-col">
-            {/* Compact Header with Back + Title in one line */}
+        <div className="h-screen w-screen bg-gray-50 flex flex-col overflow-hidden">
+            {/* Header */}
             <div className="bg-gradient-to-r from-[#FF2000] to-[#ff4520] text-white shrink-0">
                 <div className="px-4 md:px-8 py-2 md:py-2.5 flex items-center gap-3">
                     <button
                         onClick={() => navigate('/')}
                         className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white px-3 py-1.5 rounded-full border border-white/30 backdrop-blur-sm"
-                        aria-label="Kembali ke Home"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         <span className="text-sm font-medium">Kembali</span>
                     </button>
-                    <h1 className="text-sm md:text-base font-semibold tracking-wide">Verifikasi Menjadi Seller</h1>
+                    <h1 className="text-sm md:text-base font-semibold">Verifikasi Seller + Daftar UMKM</h1>
                 </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-hidden px-4 md:px-8 py-2 md:py-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 h-full">
+            <div className="flex-1 overflow-auto px-4 md:px-8 py-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Left: Benefits */}
+                    <div className="space-y-4">
+                        <h2 className="text-lg font-semibold">Keuntungan Menjadi Seller</h2>
+                        <div className="space-y-2">
+                            {[
+                                { Icon: Store, title: "UMKM Otomatis Terdaftar", desc: "Setelah disetujui, UMKM langsung tampil di marketplace" },
+                                { Icon: Package, title: "Kelola Produk", desc: "Upload dan kelola produk yang dijual" },
+                                { Icon: MapPin, title: "Muncul di Map", desc: "Lokasi UMKM terlihat pembeli terdekat" },
+                                { Icon: Wallet, title: "Terima Pembayaran", desc: "Integrasi Midtrans" },
+                                { Icon: BarChart3, title: "Dashboard", desc: "Monitor penjualan real-time" },
+                            ].map(({ Icon, title, desc }, idx) => (
+                                <div key={idx} className="flex gap-3 p-3 rounded-lg hover:bg-gray-100">
+                                    <Icon className="h-5 w-5 text-[#FF2000] shrink-0 mt-0.5" />
+                                    <div>
+                                        <h3 className="font-semibold text-sm">{title}</h3>
+                                        <p className="text-xs text-gray-600">{desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div className="bg-gray-100 p-4 rounded-lg">
+                            <h3 className="font-semibold mb-2 text-sm">Syarat dan Ketentuan</h3>
+                            <ul className="text-xs text-gray-600 space-y-1 list-disc list-inside">
+                                <li>Harus memiliki UMKM legal</li>
+                                <li>Produk sesuai kategori</li>
+                                <li>Tidak jual barang ilegal</li>
+                                <li>Menjaga kualitas produk</li>
+                                <li>Verifikasi diproses 1-3 hari kerja</li>
+                            </ul>
+                        </div>
+                    </div>
+
                     {/* Right: Form */}
-                    <div className="order-2 md:order-2 flex flex-col h-full">
-                        <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-2">Data Seller & Toko</h2>
-                        <div className="grid grid-cols-1 gap-3 flex-1 overflow-hidden">
-                            <div>
-                                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                    <div className="space-y-4">
+                        <h2 className="text-lg font-semibold">Data Seller & UMKM</h2>
+                        
+                        {/* Personal Info */}
+                        <div className="bg-white p-4 rounded-lg border space-y-3">
+                            <h3 className="font-semibold text-sm">Informasi Pribadi</h3>
+                            <input
+                                type="text"
+                                value={fullName}
+                                onChange={(e) => setFullName(e.target.value)}
+                                placeholder="Nama Lengkap (sesuai KTP)"
+                                className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[#FF2000] outline-none"
+                            />
+                            <div className="grid grid-cols-2 gap-3">
                                 <input
-                                    type="text"
-                                    value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
-                                    placeholder="Nama lengkap sesuai KTP"
-                                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2000]"
-                                    required
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="Email"
+                                    className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[#FF2000] outline-none"
                                 />
-                            </div>
-                            <div>
-                                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Nama Toko</label>
                                 <input
-                                    type="text"
-                                    value={storeName}
-                                    onChange={(e) => setStoreName(e.target.value)}
-                                    placeholder="Contoh: Toko Keripik Bu Sari"
-                                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2000]"
-                                    required
+                                    type="tel"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    placeholder="08xxxxxxxxxx"
+                                    className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[#FF2000] outline-none"
                                 />
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Email</label>
-                                    <input
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="email@contoh.com"
-                                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2000]"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">No. HP</label>
-                                    <input
-                                        type="tel"
-                                        value={phone}
-                                        onChange={(e) => setPhone(e.target.value)}
-                                        placeholder="08xxxxxxxxxx"
-                                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2000]"
-                                        required
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Alamat Toko</label>
-                                <textarea
-                                    value={storeAddress}
-                                    onChange={(e) => setStoreAddress(e.target.value)}
-                                    rows={2}
-                                    placeholder="Tulis alamat lengkap toko"
-                                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2000]"
-                                    required
-                                />
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Kartu Identitas (KTP)</label>
-                                    <input
-                                        type="file"
-                                        accept="image/*,application/pdf"
-                                        onChange={(e) => setKtpFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
-                                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-                                        required
-                                    />
-                                    {ktpFile && (
-                                        <p className="mt-1 text-[11px] text-gray-500">File: {ktpFile.name}</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Identitas Usaha (NIB/SIUP)</label>
-                                    <input
-                                        type="file"
-                                        accept="image/*,application/pdf"
-                                        onChange={(e) => setBusinessIdFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
-                                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-                                        required
-                                    />
-                                    {businessIdFile && (
-                                        <p className="mt-1 text-[11px] text-gray-500">File: {businessIdFile.name}</p>
-                                    )}
-                                </div>
-                            </div>
-                            {/* Kategori + Deskripsi in one row to save vertical space */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Kategori Toko</label>
-                                    <select
-                                        value={storeCategory}
-                                        onChange={(e) => setStoreCategory(e.target.value)}
-                                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2000]"
-                                        required
-                                    >
-                                        <option value="">Pilih Kategori</option>
-                                        <option value="kerajinan">Kerajinan</option>
-                                        <option value="kuliner">Kuliner</option>
-                                        <option value="usaha">Usaha</option>
-                                        <option value="fashion">Fashion</option>
-                                        <option value="lainnya">Lainnya</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Deskripsi Toko</label>
-                                    <textarea
-                                        value={storeDescription}
-                                        onChange={(e) => setStoreDescription(e.target.value)}
-                                        rows={2}
-                                        placeholder="Ceritakan tentang toko dan produk yang dijual"
-                                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2000]"
-                                        required
-                                    />
-                                </div>
                             </div>
                         </div>
 
-                        {/* Agreement Checkbox */}
-                        <div className="flex items-start gap-3 mt-3">
+                        {/* UMKM Info */}
+                        <div className="bg-white p-4 rounded-lg border space-y-3">
+                            <h3 className="font-semibold text-sm">Informasi UMKM</h3>
+                            <input
+                                type="text"
+                                value={namaUmkm}
+                                onChange={(e) => setNamaUmkm(e.target.value)}
+                                placeholder="Nama UMKM (Contoh: Warung Kopi Banda)"
+                                className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[#FF2000] outline-none"
+                            />
+                            <textarea
+                                value={caption}
+                                onChange={(e) => setCaption(e.target.value)}
+                                rows={2}
+                                placeholder="Deskripsi singkat UMKM (opsional)"
+                                className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[#FF2000] outline-none"
+                            />
+                            <select
+                                value={categoryId}
+                                onChange={(e) => setCategoryId(e.target.value)}
+                                className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[#FF2000] outline-none"
+                            >
+                                <option value="">Pilih Kategori</option>
+                                {categories.map(cat => (
+                                    <option key={cat._id} value={cat._id}>{cat.nama_kategori}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Map Picker */}
+                        <div className="bg-white p-4 rounded-lg border space-y-3">
+                            <h3 className="font-semibold text-sm">Lokasi UMKM (Klik di Peta)</h3>
+                            <div className="h-64 rounded-lg overflow-hidden border">
+                                <MapContainer
+                                    center={mapPosition}
+                                    zoom={13}
+                                    style={{ height: '100%', width: '100%' }}
+                                >
+                                    <TileLayer
+                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                                    />
+                                    <LocationMarker 
+                                        position={markerPosition} 
+                                        setPosition={handleMapClick}
+                                        setAddress={handleAddressFromMap}
+                                    />
+                                </MapContainer>
+                            </div>
+                            {markerPosition && (
+                                <div className="text-xs bg-green-50 p-2 rounded border border-green-200">
+                                    <p className="font-medium text-green-800">📍 Lokasi dipilih:</p>
+                                    <p className="text-green-700">Lat: {markerPosition[0].toFixed(6)}, Lng: {markerPosition[1].toFixed(6)}</p>
+                                </div>
+                            )}
+                            <textarea
+                                value={alamat}
+                                onChange={(e) => setAlamat(e.target.value)}
+                                rows={2}
+                                placeholder="Alamat lengkap UMKM"
+                                className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[#FF2000] outline-none"
+                            />
+                        </div>
+
+                        {/* Documents */}
+                        <div className="bg-white p-4 rounded-lg border space-y-3">
+                            <h3 className="font-semibold text-sm">Dokumen & Foto</h3>
+                            <div>
+                                <label className="block text-xs font-medium mb-1">KTP *</label>
+                                <input
+                                    type="file"
+                                    accept="image/*,application/pdf"
+                                    onChange={(e) => setIdCardFile(e.target.files?.[0] || null)}
+                                    className="w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:bg-gray-100 file:text-gray-700"
+                                />
+                                {idCardFile && <p className="text-[10px] text-green-600 mt-1">✓ {idCardFile.name}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium mb-1">Izin Usaha (NIB/SIUP) *</label>
+                                <input
+                                    type="file"
+                                    accept="image/*,application/pdf"
+                                    onChange={(e) => setBusinessPermitFile(e.target.files?.[0] || null)}
+                                    className="w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:bg-gray-100 file:text-gray-700"
+                                />
+                                {businessPermitFile && <p className="text-[10px] text-green-600 mt-1">✓ {businessPermitFile.name}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium mb-1">Foto UMKM (Opsional)</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => setFotoFile(e.target.files?.[0] || null)}
+                                    className="w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:bg-gray-100 file:text-gray-700"
+                                />
+                                {fotoFile && <p className="text-[10px] text-green-600 mt-1">✓ {fotoFile.name}</p>}
+                            </div>
+                        </div>
+
+                        {/* Agreement */}
+                        <div className="flex items-start gap-2">
                             <input
                                 type="checkbox"
                                 id="agree"
@@ -263,67 +428,33 @@ export default function UpgradeToSeller() {
                                 onChange={(e) => setAgreed(e.target.checked)}
                                 className="mt-1 h-4 w-4 rounded border-gray-300 text-[#FF2000] focus:ring-[#FF2000]"
                             />
-                            <label htmlFor="agree" className="text-xs md:text-sm text-gray-700 cursor-pointer">
-                                Saya menyetujui semua syarat dan ketentuan yang berlaku dan siap untuk menjadi seller
+                            <label htmlFor="agree" className="text-xs text-gray-700 cursor-pointer">
+                                Saya menyetujui semua syarat dan ketentuan. Data yang saya berikan adalah benar.
                             </label>
                         </div>
 
-                        {/* Error Message */}
                         {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mt-3">
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                                 {error}
                             </div>
                         )}
 
                         {/* Actions */}
-                        <div className="flex gap-3 mt-2.5">
+                        <div className="flex gap-3">
                             <button
                                 onClick={() => navigate('/')}
-                                className="flex-1 px-5 py-2.5 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition text-sm"
+                                disabled={loading}
+                                className="flex-1 px-4 py-2.5 border rounded-lg font-semibold text-sm hover:bg-gray-50 disabled:opacity-50"
                             >
                                 Batal
                             </button>
                             <button
                                 onClick={handleUpgrade}
                                 disabled={!agreed || loading}
-                                className="flex-1 px-5 py-2.5 bg-[#FF2000] text-white rounded-lg font-semibold hover:brightness-95 disabled:bg-gray-300 disabled:cursor-not-allowed transition text-sm"
+                                className="flex-1 px-4 py-2.5 bg-[#FF2000] text-white rounded-lg font-semibold text-sm hover:brightness-95 disabled:bg-gray-300"
                             >
-                                {loading ? 'Memproses...' : 'Verifikasi Sekarang'}
+                                {loading ? 'Mengirim...' : 'Kirim Verifikasi'}
                             </button>
-                        </div>
-                    </div>
-
-                    {/* Left: Benefits & Terms */}
-                    <div className="order-1 md:order-1 space-y-3 h-full overflow-hidden">
-                        <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-1.5 md:mb-2">
-                            Keuntungan Menjadi Seller
-                        </h2>
-                        <div className="space-y-1.5">
-                            {[
-                                { Icon: Store, title: "Daftarkan UMKM Anda", desc: "Tampilkan informasi lengkap tentang usaha Anda" },
-                                { Icon: Package, title: "Kelola Produk", desc: "Upload dan kelola produk yang Anda jual" },
-                                { Icon: MapPin, title: "Muncul di Map", desc: "Lokasi UMKM Anda akan muncul di peta untuk pembeli terdekat" },
-                                { Icon: Wallet, title: "Terima Pembayaran", desc: "Sistem pembayaran terintegrasi dengan Midtrans" },
-                                { Icon: BarChart3, title: "Dashboard Penjualan", desc: "Pantau performa penjualan Anda secara real-time" },
-                            ].map(({ Icon, title, desc }, idx) => (
-                                <div key={idx} className="flex items-start gap-2 p-1.5 md:p-2 rounded-lg hover:bg-gray-50 transition">
-                                    <Icon className="h-5 w-5 text-[#FF2000]" aria-hidden="true" />
-                                    <div>
-                                        <h3 className="font-semibold text-gray-900 text-sm md:text-base">{title}</h3>
-                                        <p className="text-xs md:text-sm text-gray-600 leading-snug">{desc}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-3 md:p-3 mt-2 md:mt-3">
-                            <h3 className="font-semibold text-gray-900 mb-1.5 md:mb-2 text-sm md:text-base">Syarat dan Ketentuan</h3>
-                            <ul className="text-xs md:text-sm text-gray-600 space-y-1 list-disc list-inside">
-                                <li>Anda harus memiliki UMKM yang legal</li>
-                                <li>Produk yang dijual harus sesuai dengan kategori yang tersedia</li>
-                                <li>Tidak menjual barang ilegal atau melanggar hukum</li>
-                                <li>Bertanggung jawab atas kualitas produk yang dijual</li>
-                                <li>Menjaga reputasi dan pelayanan yang baik</li>
-                            </ul>
                         </div>
                     </div>
                 </div>
