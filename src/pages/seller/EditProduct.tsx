@@ -13,6 +13,11 @@ export default function EditProductPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<{ name: string; price: string; image?: string; description?: string }>({ name: '', price: '', image: '', description: '' });
 
+  // AI assist for description
+  const [aiPrompt, setAiPrompt] = useState<string>('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
   const selectItem = (id: string) => {
     const p = items.find(x => x.id === id);
     if (!p) return;
@@ -48,6 +53,56 @@ export default function EditProductPage() {
     toast.success('Produk diperbarui', { title: 'Berhasil' });
     setEditingId(null);
     setForm({ name: '', price: '', image: '', description: '' });
+    setAiPrompt('');
+    setAiError(null);
+  };
+
+  const handleGenerateDescription = async () => {
+    if (!aiPrompt.trim() && !form.name.trim()) {
+      toast.error('Isi nama produk atau prompt terlebih dahulu.', { title: 'Butuh konteks' });
+      return;
+    }
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const AI_URL = (import.meta as any).env?.VITE_AI_API_URL || '';
+      const API_URL = (import.meta as any).env?.VITE_API_URL || '';
+      let generated = '';
+      const target = AI_URL || (API_URL ? `${API_URL.replace(/\/$/, '')}/ai/generate` : '');
+      if (target) {
+        try {
+          const res = await fetch(target, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt: aiPrompt || `Tulis deskripsi singkat dan menarik untuk produk bernama "${form.name}".`,
+              max_tokens: 180,
+              temperature: 0.8,
+            }),
+          });
+          const data = await res.json().catch(() => ({}));
+          generated = data?.text || data?.description || '';
+        } catch {}
+      }
+      if (!generated) {
+        const name = form.name.trim();
+        const p = aiPrompt.trim();
+        generated = [
+          name ? `${name} adalah produk berkualitas yang dibuat dengan perhatian pada detail.` : '',
+          p ? `Dirancang khusus untuk: ${p}.` : '',
+          'Cocok untuk digunakan sehari-hari, praktis, dan bernilai harga. Pesan sekarang dan rasakan bedanya!'
+        ].filter(Boolean).join(' ');
+      }
+      if (!generated) throw new Error('Gagal membuat deskripsi.');
+      setForm((f) => ({ ...f, description: generated }));
+      toast.success('Deskripsi berhasil dibuat dengan AI', { title: 'Selesai' });
+    } catch (err: any) {
+      const msg = err?.message || 'Gagal membuat deskripsi.';
+      setAiError(msg);
+      toast.error(msg, { title: 'Kesalahan' });
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   return (
@@ -93,6 +148,30 @@ export default function EditProductPage() {
             <label className="block text-sm font-medium mb-1 text-neutral-800 dark:text-neutral-200">Foto Produk</label>
             <input type="file" accept="image/*" onChange={handleImageUpload} className="block w-full text-sm text-neutral-900 dark:text-neutral-100 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-neutral-200 hover:file:bg-neutral-300 dark:file:bg-white/10 dark:hover:file:bg-white/15"/>
             {form.image && <img src={form.image} className="mt-2 h-16 w-16 rounded-md object-cover border border-neutral-200 dark:border-white/10"/>}
+          </div>
+          {/* Optional AI prompt input */}
+          <div className="md:col-span-4">
+            <label className="block text-sm font-medium mb-1 text-neutral-800 dark:text-neutral-200">Bantu tulis deskripsi (opsional)</label>
+            <div className="flex flex-col md:flex-row gap-2">
+              <input
+                className="flex-1 border border-neutral-300 dark:border-white/20 rounded-md px-3 py-2 text-sm bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-0"
+                placeholder="Tulis konteks deskripsi, misal: keripik pedas tingkat 3, cocok untuk oleh-oleh, tahan 3 bulan"
+                value={aiPrompt}
+                onChange={(e)=>setAiPrompt(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={handleGenerateDescription}
+                disabled={aiLoading}
+                className="px-4 py-2 rounded-md text-white bg-[#FF2000] hover:brightness-95 text-sm disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {aiLoading ? 'Membuat…' : 'Buat Deskripsi dengan AI'}
+              </button>
+            </div>
+            {aiError && <p className="mt-1 text-xs text-red-500">{aiError}</p>}
+            {!aiError && aiPrompt && !aiLoading && (
+              <p className="mt-1 text-[11px] text-neutral-500">Hasil AI akan otomatis mengisi kolom deskripsi di bawah.</p>
+            )}
           </div>
           <div className="md:col-span-4">
             <label className="block text-sm font-medium mb-1 text-neutral-800 dark:text-neutral-200">Deskripsi</label>
