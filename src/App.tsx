@@ -18,7 +18,13 @@ import VerifySellerPage from './pages/admin/VerifySeller'
 
 function AppShell() {
 	const location = useLocation();
-	const hideChat = location.pathname.startsWith('/login') || location.pathname.startsWith('/register') || location.pathname.startsWith('/chatbot');
+	const path = location.pathname;
+	const hideChat =
+		path.startsWith('/login') ||
+		path.startsWith('/register') ||
+		path.startsWith('/chatbot') ||
+		path.startsWith('/admin') ||
+		path.startsWith('/seller');
 	return (
 		<>
 			<Routes>
