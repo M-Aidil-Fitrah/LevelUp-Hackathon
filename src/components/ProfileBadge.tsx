@@ -80,6 +80,10 @@ export const ProfileBadge: React.FC<ProfileBadgeProps> = ({ variant = "desktop" 
     setOpen(false);
     navigate("/upgrade-to-seller");
   };
+  const handleGoSellerDashboard = () => {
+    setOpen(false);
+    navigate("/seller/dashboard");
+  };
 
   const compact = variant === "mobile";
 
@@ -160,6 +164,23 @@ export const ProfileBadge: React.FC<ProfileBadgeProps> = ({ variant = "desktop" 
                   <path fillRule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clipRule="evenodd" />
                 </svg>
                 Verifikasi Menjadi Seller
+              </button>
+            )}
+            {role === 'seller' && (
+              <button
+                onClick={handleGoSellerDashboard}
+                className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-800 transition"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path d="M3 4a2 2 0 012-2h2a2 2 0 012 2v1h2V4a2 2 0 012-2h2a2 2 0 012 2v3H3V4z" />
+                  <path d="M3 9h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                </svg>
+                Dashboard Seller
               </button>
             )}
             <button

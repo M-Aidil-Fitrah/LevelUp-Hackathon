@@ -11,6 +11,7 @@ import ProductDetail from './pages/ProductDetail'
 import UpgradeToSeller from './pages/UpgradeToSeller'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import LoginAdmin from './pages/admin/LoginAdmin'
+import SellerDashboard from './pages/seller/SellerDashboard'
 
 function AppShell() {
 	const location = useLocation();
@@ -26,6 +27,7 @@ function AppShell() {
 				<Route path="/login" element={<Login />} />
 				<Route path="/register" element={<Register />} />
 				<Route path="/upgrade-to-seller" element={<UpgradeToSeller />} />
+				<Route path="/seller/dashboard" element={<SellerDashboard />} />
 				<Route path="*" element={<Navigate to="/" replace />} />
 
 				{/* Admin routes */}
