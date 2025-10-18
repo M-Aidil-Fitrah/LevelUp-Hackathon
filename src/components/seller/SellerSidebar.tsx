@@ -63,9 +63,9 @@ export const SellerSidebar: React.FC<SellerSidebarProps> = ({
       <SidebarBody className={cn("justify-between gap-10", className)}>
         <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
           <div className="flex items-center gap-2 py-1">
-            <div className="h-5 w-6 shrink-0 rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-sm bg-black dark:bg-white" />
+            <img src="/logoputih.svg" alt="LevelUp" className="h-20 w-auto shrink-0" />
             {open && (
-              <span className="text-sm font-medium text-black dark:text-white">Seller Panel</span>
+              <span className="text-sm font-medium text-black dark:text-white">Seller Dashboard</span>
             )}
           </div>
           <div className="mt-8 flex flex-col gap-2">

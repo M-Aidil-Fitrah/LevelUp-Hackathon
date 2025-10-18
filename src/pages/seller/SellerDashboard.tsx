@@ -69,6 +69,24 @@ export default function SellerDashboard() {
     setEditingId(null);
   };
 
+  const handleImageUpload: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Optional: basic size guard (e.g., 2MB)
+    const maxBytes = 2 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      toast.error('Ukuran gambar maksimal 2MB', { title: 'Gambar Terlalu Besar' });
+      e.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result || '');
+      setForm((f) => ({ ...f, image: dataUrl }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const price = Number(form.price);
@@ -120,21 +138,51 @@ export default function SellerDashboard() {
           </div>
 
           {section === 'home' && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="rounded-lg border border-neutral-200 dark:border-white/10 p-4">
-                <div className="text-sm text-neutral-600 dark:text-neutral-300">Total Produk</div>
-                <div className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{products.length}</div>
-              </div>
-              <div className="rounded-lg border border-neutral-200 dark:border-white/10 p-4">
-                <div className="text-sm text-neutral-600 dark:text-neutral-300">Aksi Cepat</div>
-                <div className="mt-2 flex gap-2">
-                  <button onClick={() => setSection('tambah')} className="px-3 py-1.5 text-sm rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Tambah Produk</button>
-                  <button onClick={() => setSection('edit')} className="px-3 py-1.5 text-sm rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Edit Produk</button>
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="rounded-lg border border-neutral-200 dark:border-white/10 p-4">
+                  <div className="text-sm text-neutral-600 dark:text-neutral-300">Total Produk</div>
+                  <div className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{products.length}</div>
+                </div>
+                <div className="rounded-lg border border-neutral-200 dark:border-white/10 p-4">
+                  <div className="text-sm text-neutral-600 dark:text-neutral-300">Aksi Cepat</div>
+                  <div className="mt-2 flex gap-2 flex-wrap">
+                    <button onClick={() => navigate('/seller/add')} className="px-3 py-1.5 text-sm rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Tambah Produk</button>
+                    <button onClick={() => navigate('/seller/edit')} className="px-3 py-1.5 text-sm rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Edit Produk</button>
+                    <button onClick={() => navigate('/seller/delete')} className="px-3 py-1.5 text-sm rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Hapus Produk</button>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-neutral-200 dark:border-white/10 p-4">
+                  <div className="text-sm text-neutral-600 dark:text-neutral-300">Tips</div>
+                  <div className="text-sm mt-1 text-neutral-700 dark:text-neutral-300">Kelola produk Anda lewat menu aksi atau sidebar.</div>
                 </div>
               </div>
-              <div className="rounded-lg border border-neutral-200 dark:border-white/10 p-4">
-                <div className="text-sm text-neutral-600 dark:text-neutral-300">Tips</div>
-                <div className="text-sm mt-1 text-neutral-700 dark:text-neutral-300">Kelola produk Anda melalui menu di sisi kiri.</div>
+
+              <div className="rounded-xl border border-neutral-200 dark:border-white/10 divide-y divide-neutral-200 dark:divide-white/10">
+                {products.length === 0 ? (
+                  <div className="p-6 text-sm text-neutral-600 dark:text-neutral-300">Belum ada produk.</div>
+                ) : (
+                  products.map(p => (
+                    <div key={p.id} className="p-4 flex items-start gap-4">
+                      <div className="h-16 w-16 rounded-md bg-gray-100 flex items-center justify-center overflow-hidden">
+                        {p.image ? (
+                          <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-xs text-neutral-500 dark:text-neutral-400">No Image</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-neutral-900 dark:text-neutral-100">{p.name}</div>
+                        <div className="text-sm text-neutral-700 dark:text-neutral-300">Rp {p.price.toLocaleString('id-ID')}</div>
+                        {p.description && <div className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">{p.description}</div>}
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => navigate('/seller/edit')} className="px-3 py-1.5 border rounded-md text-sm border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Edit</button>
+                        <button onClick={() => navigate('/seller/delete')} className="px-3 py-1.5 border rounded-md text-sm text-white bg-red-600 hover:bg-red-700">Hapus</button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -161,13 +209,25 @@ export default function SellerDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-neutral-800 dark:text-neutral-200">URL Gambar (opsional)</label>
+                <label className="block text-sm font-medium mb-1 text-neutral-800 dark:text-neutral-200">Foto Produk</label>
                 <input
-                  className="w-full border border-neutral-300 dark:border-white/20 rounded-md px-3 py-2 text-sm bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-0"
-                  placeholder="https://..."
-                  value={form.image}
-                  onChange={e => setForm(f => ({ ...f, image: e.target.value }))}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="block w-full text-sm text-neutral-900 dark:text-neutral-100 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-neutral-200 hover:file:bg-neutral-300 dark:file:bg-white/10 dark:hover:file:bg-white/15"
                 />
+                {form.image && (
+                  <div className="mt-2 flex items-center gap-3">
+                    <img src={form.image} alt="Preview" className="h-16 w-16 rounded-md object-cover border border-neutral-200 dark:border-white/10" />
+                    <button
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, image: '' }))}
+                      className="px-3 py-1.5 border rounded-md text-xs border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10"
+                    >
+                      Hapus Foto
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="md:col-span-4">
                 <label className="block text-sm font-medium mb-1 text-neutral-800 dark:text-neutral-200">Deskripsi</label>
