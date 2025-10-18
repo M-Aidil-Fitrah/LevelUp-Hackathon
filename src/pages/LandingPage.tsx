@@ -11,9 +11,9 @@ import { Footer } from "@/components/Footer";
 import { LazyVisible } from "@/hooks/use-in-viewport";
 
 const demoItems = [
-  { link: '#', text: 'Marketplace', image: 'https://picsum.photos/600/400?random=1' },
-  { link: '#', text: 'UMKM Nearby', image: 'https://picsum.photos/600/400?random=2' },
-  { link: '#', text: 'Chatbot AI', image: 'https://picsum.photos/600/400?random=3' },
+  { link: '#', text: 'Marketplace', image: 'assets/images/putih.jpg' },
+  { link: '#', text: 'UMKM Nearby', image: 'assets/images/putih.jpg'},
+  { link: '#', text: 'Chatbot AI', image: 'assets/images/putih.jpg' },
 ];
 
 const LandingPage = () => {

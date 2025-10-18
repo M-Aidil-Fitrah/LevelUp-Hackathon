@@ -35,50 +35,50 @@ const MOBILE_BREAKPOINT = 768;
 const cardData: BentoCardProps[] = [
   {
     color: '#060010',
-    title: 'Analytics',
-    description: 'Track user behavior',
-    label: 'Insights',
+    title: 'Toko Kelontong Pak Andi',
+    description: 'Barang Murah dan Lengkap',
+    label: 'Marketplace',
+    imageSrc: '/assets/images/tokokelontong.jpg',
+    imageFit: 'cover'
+  },
+  {
+    color: '#060010',
+    title: 'Toko Baju Kak Putri',
+    description: 'Berbagai Fashion Terbaru',
+    label: 'Marketplace',
+    imageSrc: '/assets/images/tokofashion.webp',
+    imageFit: 'cover'
+  },
+  {
+    color: '#060010',
+    title: 'Toko Kue Bu Ani',
+    description: 'Enak dan Manis',
+    label: 'Marketplace',
+    imageSrc: '/assets/images/tokokue.jpeg',
+    imageFit: 'cover'
+  },
+  {
+    color: '#060010',
+    title: 'Toko Kerajinan Pak Budi',
+    description: 'Berbagai kerajinan Tangan Unik',
+    label: 'Marketplace',
     imageSrc: '/assets/images/foto1.png',
     imageFit: 'cover'
   },
   {
     color: '#060010',
-    title: 'Dashboard',
-    description: 'Centralized data view',
-    label: 'Overview',
-    imageSrc: '/assets/images/foto1.png',
+    title: 'Toko Elektronik Sari',
+    description: 'Menjual Beragam Perangkat Elektronik',
+    label: 'Marketplace',
+    imageSrc: '/assets/images/tokoelektronik.jpg',
     imageFit: 'cover'
   },
   {
     color: '#060010',
-    title: 'Collaboration',
-    description: 'Work together seamlessly',
-    label: 'Teamwork',
-    imageSrc: '/assets/images/foto1.png',
-    imageFit: 'cover'
-  },
-  {
-    color: '#060010',
-    title: 'Automation',
-    description: 'Streamline workflows',
-    label: 'Efficiency',
-    imageSrc: '/assets/images/foto1.png',
-    imageFit: 'cover'
-  },
-  {
-    color: '#060010',
-    title: 'Integration',
-    description: 'Connect favorite tools',
-    label: 'Connectivity',
-    imageSrc: '/assets/images/foto1.png',
-    imageFit: 'cover'
-  },
-  {
-    color: '#060010',
-    title: 'Security',
-    description: 'Enterprise-grade protection',
-    label: 'Protection',
-    imageSrc: '/assets/images/foto1.png',
+    title: 'Matcha Shop Seduhanku',
+    description: 'Menjual Berbagai Olahan Matcha',
+    label: 'Marketplace',
+    imageSrc: '/assets/images/tokominum.jpg',
     imageFit: 'cover'
   }
 ];
