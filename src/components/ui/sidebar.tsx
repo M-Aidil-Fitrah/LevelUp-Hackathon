@@ -161,7 +161,7 @@ export const SidebarLink = ({
 }: {
   link: Links;
   className?: string;
-}) => {
+} & React.ComponentProps<'a'>) => {
   const { open, animate } = useSidebar();
   return (
     <a
