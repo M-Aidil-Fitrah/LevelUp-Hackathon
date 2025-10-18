@@ -56,6 +56,38 @@ export default function UmkmNearby() {
   const [cardResults, setCardResults] = useState<Umkm[]>([]);
   const [showCards, setShowCards] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const currentIndexRef = useRef(0);
+  const SCROLL_WRAP_DURATION = 350; // ms for smooth scroll before instant wrap
+
+  // Build items with clones on both ends for seamless wrap
+  const itemsForCarousel = useMemo(() => {
+    if (!cardResults.length) return [] as Umkm[];
+    const first = cardResults[0];
+    const last = cardResults[cardResults.length - 1];
+    return [last, ...cardResults, first];
+  }, [cardResults]);
+
+  const scrollToIndex = (idx: number) => {
+    const c = carouselRef.current;
+    if (!c) return;
+    const children = Array.from(c.children) as HTMLElement[];
+    if (!children.length) return;
+    const len = children.length;
+    const i = ((idx % len) + len) % len; // wrap
+    const target = children[i];
+    c.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
+  };
+
+  const jumpToIndexInstant = (idx: number) => {
+    const c = carouselRef.current;
+    if (!c) return;
+    const children = Array.from(c.children) as HTMLElement[];
+    if (!children.length) return;
+    const len = children.length;
+    const i = ((idx % len) + len) % len;
+    const target = children[i];
+    c.scrollTo({ left: target.offsetLeft, behavior: 'auto' });
+  };
 
   // Highlight helper: bold matches in orange
   const Highlight = ({ text, query, className, strong = false }: { text?: string; query: string; className?: string; strong?: boolean }) => {
@@ -241,10 +273,22 @@ export default function UmkmNearby() {
         .sort((a, b) => a.d - b.d)
         .map((x) => x.i);
     }
-    setCardResults(pool.slice(0, 3));
+  // Show more cards so arrows have something to scroll through
+    const results = pool.slice(0, 15);
+    setCardResults(results);
+    // With cloned edges, start at index 1 (first real item)
+    currentIndexRef.current = 1;
     setShowCards(true);
     setShowSuggestions(false);
   }
+
+  // When cards are shown, align scroll to the first real item (index 1)
+  useEffect(() => {
+    if (showCards && itemsForCarousel.length) {
+      // next frame to ensure children are rendered
+      requestAnimationFrame(() => jumpToIndexInstant(1));
+    }
+  }, [showCards, itemsForCarousel]);
 
   // Helpers
   const distanceKm = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
@@ -305,6 +349,10 @@ export default function UmkmNearby() {
 
   return (
     <div className="h-screen w-screen relative bg-white">
+      <style>{`
+        .no-scrollbar { scrollbar-width: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+      `}</style>
       {/* Back to home button */}
       <button
         onClick={() => navigate('/')}
@@ -451,7 +499,23 @@ export default function UmkmNearby() {
               <X size={18} />
             </button>
             <div className="flex items-center gap-2">
-              <button className="p-2 rounded-full hover:bg-[#222]" onClick={() => { const c = carouselRef.current; if (c) c.scrollBy({ left: -300, behavior: 'smooth' }); }} aria-label="Prev">
+              <button
+                className="p-2 rounded-full hover:bg-[#222]"
+                onClick={() => {
+                  if (!itemsForCarousel.length) return;
+                  const len = itemsForCarousel.length;
+                  const next = (currentIndexRef.current - 1 + len) % len;
+                  currentIndexRef.current = next;
+                  scrollToIndex(next);
+                  if (next === 0) {
+                    setTimeout(() => {
+                      currentIndexRef.current = len - 2; // last real item
+                      jumpToIndexInstant(len - 2);
+                    }, SCROLL_WRAP_DURATION);
+                  }
+                }}
+                aria-label="Prev"
+              >
                 <ChevronLeft />
               </button>
               <div
@@ -464,13 +528,13 @@ export default function UmkmNearby() {
                     e.preventDefault();
                   }
                 }}
-                className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory px-1"
+                className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory px-1 no-scrollbar"
               >
-                {cardResults.map((i) => {
+                {itemsForCarousel.map((i, idx) => {
                   const imgSrc = i.thumbnail || 'https://placehold.co/400x240?text=UMKM';
                   const distance = userLocation ? distanceKm(userLocation, { lat: i.latitude, lng: i.longitude }) : null;
                   return (
-                    <div key={i._id} className="min-w-[320px] snap-center bg-[#111111] border border-[#2A2A2A] rounded-lg overflow-hidden hover:brightness-110">
+                    <div key={`${i._id}-${idx}`} className="min-w-[320px] snap-center bg-[#111111] border border-[#2A2A2A] rounded-lg overflow-hidden hover:brightness-110">
                       <button onClick={() => { setSelectedUmkmId(i._id); setFlyTarget([i.latitude, i.longitude]); setShowCards(false); }} className="block w-full text-left">
                         <img src={imgSrc} alt={i.nama_umkm} className="w-full h-36 object-cover" />
                         <div className="p-3">
@@ -491,7 +555,23 @@ export default function UmkmNearby() {
                   );
                 })}
               </div>
-              <button className="p-2 rounded-full hover:bg-[#222]" onClick={() => { const c = carouselRef.current; if (c) c.scrollBy({ left: 300, behavior: 'smooth' }); }} aria-label="Next">
+              <button
+                className="p-2 rounded-full hover:bg-[#222]"
+                onClick={() => {
+                  if (!itemsForCarousel.length) return;
+                  const len = itemsForCarousel.length;
+                  const next = (currentIndexRef.current + 1) % len;
+                  currentIndexRef.current = next;
+                  scrollToIndex(next);
+                  if (next === len - 1) {
+                    setTimeout(() => {
+                      currentIndexRef.current = 1; // first real item
+                      jumpToIndexInstant(1);
+                    }, SCROLL_WRAP_DURATION);
+                  }
+                }}
+                aria-label="Next"
+              >
                 <ChevronRight />
               </button>
             </div>
