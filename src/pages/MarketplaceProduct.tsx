@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useId, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import PillNav from "@/components/PillNav";
 import { Footer } from "@/components/Footer";
@@ -127,6 +127,7 @@ const STORES: Store[] = [
 type SortBy = "price-asc" | "price-desc" | "distance" | "name-asc" | "";
 
 export default function MarketplaceProduct() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("");
   const [page, setPage] = useState(1);
@@ -361,6 +362,18 @@ export default function MarketplaceProduct() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="px-4 py-3 text-sm rounded-full font-bold bg-[#ff2000] hover:bg-[#C92C0D] text-white"
+                        onClick={() => {
+                          const store = selectedStore;
+                          const params = new URLSearchParams({
+                            productId: active.id,
+                            name: active.name,
+                            price: String(active.price * 1000),
+                            imageUrl: active.imageUrl,
+                            storeName: store?.name || "",
+                            storeId: String(store?.id || ""),
+                          });
+                          navigate(`/order?${params.toString()}`);
+                        }}
                       >
                         Pesan
                       </motion.button>
@@ -388,7 +401,9 @@ export default function MarketplaceProduct() {
             <li className="text-center text-gray-500 py-16">
               Belum ada toko terpilih.
             </li>
-          ) : pageItems.length === 0 ? (
+          ) : productsForStore.length === 0 ? (
+            <li className="text-center text-gray-500 py-16">Toko ini belum memiliki produk.</li>
+          ) : filtered.length === 0 ? (
             <li className="text-center text-gray-500 py-16">Tidak ada produk yang cocok.</li>
           ) : (
             pageItems.map((item) => (
@@ -425,6 +440,7 @@ export default function MarketplaceProduct() {
                 </div>
                 <motion.button
                   layout
+                  onClick={(e) => { e.stopPropagation(); setActive(item); }}
                   className="px-4 py-2 text-sm rounded-full font-bold bg-gray-100 hover:bg-[#ff2000] hover:text-white text-black mt-4 md:mt-0"
                 >
                   Lihat Detail

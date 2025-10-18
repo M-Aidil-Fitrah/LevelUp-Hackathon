@@ -9,6 +9,7 @@ const ChatbotAI = React.lazy(() => import('./pages/ChatbotAI'))
 const ChatBubble = React.lazy(() => import('./components/chatbot/ChatBubble'))
 const Marketplace = React.lazy(() => import('./pages/Marketplace'))
 const MarketplaceProduct = React.lazy(() => import('./pages/MarketplaceProduct'))
+const OrderPage = React.lazy(() => import('./pages/Order'))
 const UpgradeToSeller = React.lazy(() => import('./pages/UpgradeToSeller'))
 const UmkmNearby = React.lazy(() => import('./pages/UmkmNearby'))
 const SellerDashboard = React.lazy(() => import('./pages/seller/SellerDashboard'))
@@ -36,7 +37,9 @@ function AppShell() {
 				<Route path="/" element={<LandingPage />} />
 				<Route path="/chatbot" element={<ChatbotAI />} />
 				<Route path="/marketplace" element={<Marketplace />} />
+				<Route path="/marketplace/:id" element={<MarketplaceProduct />} />
 				<Route path="/marketplace-product" element={<MarketplaceProduct />} />
+                <Route path="/order" element={<OrderPage />} />
 				<Route path="/umkm-nearby" element={<UmkmNearby />} />
 				<Route path="/login" element={<Login />} />
 				<Route path="/register" element={<Register />} />
