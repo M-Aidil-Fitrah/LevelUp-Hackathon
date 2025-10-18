@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useNavigate } from 'react-router-dom';
@@ -23,6 +23,14 @@ interface Umkm {
 }
 
 const API_URL = 'https://levelup-backend-production-839e.up.railway.app/api';
+
+// Small helper component to capture map click and reset selection
+function MapClickResetter({ onReset }: { onReset: () => void }) {
+  useMapEvents({
+    click: () => onReset(),
+  });
+  return null;
+}
 
 export default function UmkmNearby() {
   const navigate = useNavigate();
@@ -290,6 +298,8 @@ export default function UmkmNearby() {
       {/* Map */}
       <div className="absolute inset-0">
         <MapContainer center={safeCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
+          {/* Reset selected marker when clicking on empty map */}
+          <MapClickResetter onReset={() => setSelectedUmkmId(null)} />
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -314,7 +324,7 @@ export default function UmkmNearby() {
                 position={[i.latitude, i.longitude]}
                 icon={isSelected ? redIcon : blueIcon}
                 eventHandlers={{
-                  click: () => setSelectedUmkmId(i._id),
+                  click: () => setSelectedUmkmId((prev) => (prev === i._id ? null : i._id)),
                 }}
               >
                 <Popup>
