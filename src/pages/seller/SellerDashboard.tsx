@@ -113,67 +113,67 @@ export default function SellerDashboard() {
     <div className="flex h-screen w-screen overflow-hidden md:flex-row bg-gray-100 dark:bg-neutral-900">
       <SellerSidebar active={section} onChange={setSection} />
       <div className="flex flex-1">
-        <div className="flex h-full w-full flex-1 flex-col gap-2 bg-white p-3 md:p-8 dark:bg-neutral-900">
+        <div className="flex h-full w-full flex-1 flex-col gap-2 p-3 md:p-8">
           <div className="flex items-center justify-between mb-2">
-            <h1 className="text-lg md:text-xl font-semibold">Dashboard Seller</h1>
-            <button onClick={() => navigate('/marketplace')} className="text-xs md:text-sm px-3 py-1.5 rounded-md border hover:bg-gray-100">Ke Marketplace</button>
+            <h1 className="text-lg md:text-xl font-semibold text-neutral-900 dark:text-neutral-100">Dashboard Seller</h1>
+            <button onClick={() => navigate('/marketplace')} className="text-xs md:text-sm px-3 py-1.5 rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Ke Marketplace</button>
           </div>
 
           {section === 'home' && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="rounded-lg border p-4">
-                <div className="text-sm text-gray-500">Total Produk</div>
-                <div className="text-2xl font-bold">{products.length}</div>
+              <div className="rounded-lg border border-neutral-200 dark:border-white/10 p-4">
+                <div className="text-sm text-neutral-600 dark:text-neutral-300">Total Produk</div>
+                <div className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{products.length}</div>
               </div>
-              <div className="rounded-lg border p-4">
-                <div className="text-sm text-gray-500">Aksi Cepat</div>
+              <div className="rounded-lg border border-neutral-200 dark:border-white/10 p-4">
+                <div className="text-sm text-neutral-600 dark:text-neutral-300">Aksi Cepat</div>
                 <div className="mt-2 flex gap-2">
-                  <button onClick={() => setSection('tambah')} className="px-3 py-1.5 text-sm rounded-md border">Tambah Produk</button>
-                  <button onClick={() => setSection('edit')} className="px-3 py-1.5 text-sm rounded-md border">Edit Produk</button>
+                  <button onClick={() => setSection('tambah')} className="px-3 py-1.5 text-sm rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Tambah Produk</button>
+                  <button onClick={() => setSection('edit')} className="px-3 py-1.5 text-sm rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Edit Produk</button>
                 </div>
               </div>
-              <div className="rounded-lg border p-4">
-                <div className="text-sm text-gray-500">Tips</div>
-                <div className="text-sm mt-1 text-gray-600">Kelola produk Anda melalui menu di sisi kiri.</div>
+              <div className="rounded-lg border border-neutral-200 dark:border-white/10 p-4">
+                <div className="text-sm text-neutral-600 dark:text-neutral-300">Tips</div>
+                <div className="text-sm mt-1 text-neutral-700 dark:text-neutral-300">Kelola produk Anda melalui menu di sisi kiri.</div>
               </div>
             </div>
           )}
 
           {(section === 'tambah' || (section === 'edit' && editingId)) && (
-            <form onSubmit={handleSubmit} className="bg-white rounded-xl border p-4 md:p-5 mb-4 grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
+            <form onSubmit={handleSubmit} className="rounded-xl border border-neutral-200 dark:border-white/10 p-4 md:p-5 mb-4 grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Nama Produk</label>
+                <label className="block text-sm font-medium mb-1 text-neutral-800 dark:text-neutral-200">Nama Produk</label>
                 <input
-                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  className="w-full border border-neutral-300 dark:border-white/20 rounded-md px-3 py-2 text-sm bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-0"
                   placeholder="Contoh: Keripik Pisang Manis"
                   value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Harga (Rp)</label>
+                <label className="block text-sm font-medium mb-1 text-neutral-800 dark:text-neutral-200">Harga (Rp)</label>
                 <input
                   type="number"
-                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  className="w-full border border-neutral-300 dark:border-white/20 rounded-md px-3 py-2 text-sm bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-0"
                   placeholder="10000"
                   value={form.price}
                   onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">URL Gambar (opsional)</label>
+                <label className="block text-sm font-medium mb-1 text-neutral-800 dark:text-neutral-200">URL Gambar (opsional)</label>
                 <input
-                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  className="w-full border border-neutral-300 dark:border-white/20 rounded-md px-3 py-2 text-sm bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-0"
                   placeholder="https://..."
                   value={form.image}
                   onChange={e => setForm(f => ({ ...f, image: e.target.value }))}
                 />
               </div>
               <div className="md:col-span-4">
-                <label className="block text-sm font-medium mb-1">Deskripsi</label>
+                <label className="block text-sm font-medium mb-1 text-neutral-800 dark:text-neutral-200">Deskripsi</label>
                 <textarea
                   rows={2}
-                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  className="w-full border border-neutral-300 dark:border-white/20 rounded-md px-3 py-2 text-sm bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-0"
                   placeholder="Deskripsi singkat produk"
                   value={form.description}
                   onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
@@ -181,7 +181,7 @@ export default function SellerDashboard() {
               </div>
               <div className="md:col-span-4 flex gap-3 justify-end">
                 {(editingId || section === 'edit') && (
-                  <button type="button" onClick={() => { resetForm(); setSection('edit'); }} className="px-4 py-2 border rounded-md text-sm">Batal</button>
+                  <button type="button" onClick={() => { resetForm(); setSection('edit'); }} className="px-4 py-2 border rounded-md text-sm border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Batal</button>
                 )}
                 <button type="submit" className="px-4 py-2 rounded-md text-white bg-[#FF2000] hover:brightness-95 text-sm">
                   {editingId ? 'Simpan Perubahan' : 'Tambah Produk'}
@@ -191,9 +191,9 @@ export default function SellerDashboard() {
           )}
 
           {(section === 'edit' || section === 'hapus') && (
-            <div className="bg-white rounded-xl border divide-y">
+            <div className="rounded-xl border border-neutral-200 dark:border-white/10 divide-y divide-neutral-200 dark:divide-white/10">
               {products.length === 0 ? (
-                <div className="p-6 text-sm text-gray-500">Belum ada produk.</div>
+                <div className="p-6 text-sm text-neutral-600 dark:text-neutral-300">Belum ada produk.</div>
               ) : (
                 products.map(p => (
                   <div key={p.id} className="p-4 flex items-start gap-4">
@@ -201,17 +201,17 @@ export default function SellerDashboard() {
                       {p.image ? (
                         <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
                       ) : (
-                        <span className="text-xs text-gray-400">No Image</span>
+                        <span className="text-xs text-neutral-500 dark:text-neutral-400">No Image</span>
                       )}
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold">{p.name}</div>
-                      <div className="text-sm text-gray-600">Rp {p.price.toLocaleString('id-ID')}</div>
-                      {p.description && <div className="text-xs text-gray-500 mt-1">{p.description}</div>}
+                      <div className="font-semibold text-neutral-900 dark:text-neutral-100">{p.name}</div>
+                      <div className="text-sm text-neutral-700 dark:text-neutral-300">Rp {p.price.toLocaleString('id-ID')}</div>
+                      {p.description && <div className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">{p.description}</div>}
                     </div>
                     <div className="flex gap-2">
                       {section === 'edit' && (
-                        <button onClick={() => { handleEdit(p.id); setSection('edit'); }} className="px-3 py-1.5 border rounded-md text-sm">Edit</button>
+                        <button onClick={() => { handleEdit(p.id); setSection('edit'); }} className="px-3 py-1.5 border rounded-md text-sm border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Edit</button>
                       )}
                       {section === 'hapus' && (
                         <button onClick={() => handleDelete(p.id)} className="px-3 py-1.5 border rounded-md text-sm text-white bg-red-500">Hapus</button>
@@ -224,11 +224,11 @@ export default function SellerDashboard() {
           )}
 
           {section === 'tambah' && (
-            <div className="bg-white rounded-xl border">
+            <div className="rounded-xl border border-neutral-200 dark:border-white/10">
               {products.length === 0 ? (
-                <div className="p-6 text-sm text-gray-500">Belum ada produk. Gunakan formulir di atas untuk menambah produk.</div>
+                <div className="p-6 text-sm text-neutral-600 dark:text-neutral-300">Belum ada produk. Gunakan formulir di atas untuk menambah produk.</div>
               ) : (
-                <div className="p-4 text-sm text-gray-600">Gunakan menu Edit/Hapus untuk mengelola produk.</div>
+                <div className="p-4 text-sm text-neutral-700 dark:text-neutral-300">Gunakan menu Edit/Hapus untuk mengelola produk.</div>
               )}
             </div>
           )}
