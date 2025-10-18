@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Circle, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle, Tooltip, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useNavigate } from 'react-router-dom';
@@ -433,7 +433,11 @@ export default function UmkmNearby() {
                     setFlyTarget([i.latitude, i.longitude]);
                   },
                 }}
-              />
+              >
+                <Tooltip permanent direction="top" offset={[0, -24]} className="!bg-[#171717] !text-white !px-2 !py-1 !rounded !border !border-[#2A2A2A] !shadow">
+                  <span className="text-xs font-medium">{i.nama_umkm}</span>
+                </Tooltip>
+              </Marker>
             );
           })}
         </MapContainer>
@@ -450,7 +454,18 @@ export default function UmkmNearby() {
               <button className="p-2 rounded-full hover:bg-[#222]" onClick={() => { const c = carouselRef.current; if (c) c.scrollBy({ left: -300, behavior: 'smooth' }); }} aria-label="Prev">
                 <ChevronLeft />
               </button>
-              <div ref={carouselRef} className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory px-1">
+              <div
+                ref={carouselRef}
+                onWheel={(e) => {
+                  const c = carouselRef.current;
+                  if (!c) return;
+                  if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                    c.scrollLeft += e.deltaY;
+                    e.preventDefault();
+                  }
+                }}
+                className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory px-1"
+              >
                 {cardResults.map((i) => {
                   const imgSrc = i.thumbnail || 'https://placehold.co/400x240?text=UMKM';
                   const distance = userLocation ? distanceKm(userLocation, { lat: i.latitude, lng: i.longitude }) : null;
@@ -505,11 +520,8 @@ export default function UmkmNearby() {
                     <div className="flex items-center gap-1"><Tag size={14} /> {i.kategori || '-'}</div>
                     {distance !== null && (<div>{distance.toFixed(1)} km</div>)}
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <button onClick={() => setFlyTarget([i.latitude, i.longitude])} className="text-sm bg-[#222] hover:brightness-110 text-white rounded-md py-2 transition">
-                      Lihat di Peta
-                    </button>
-                    <button onClick={() => navigate(`/marketplace/${i._id}`)} className="text-sm bg-[#FF2000] hover:brightness-110 text-white rounded-md py-2 transition">
+                  <div className="mt-3">
+                    <button onClick={() => navigate(`/marketplace/${i._id}`)} className="w-full text-sm bg-[#FF2000] hover:brightness-110 text-white rounded-md py-2 transition">
                       Lihat Toko
                     </button>
                   </div>
