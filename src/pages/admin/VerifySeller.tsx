@@ -47,7 +47,7 @@ export default function VerifySellerPage() {
 
           <div className="rounded-xl border border-neutral-200 dark:border-white/10 divide-y divide-neutral-200 dark:divide-white/10">
             {apps.length === 0 ? (
-              <div className="p-6 text-sm text-neutral-600 dark:text-neutral-300">Belum ada pengajuan (buyer) untuk menjadi seller.</div>
+              <div className="p-6 text-sm text-neutral-600 dark:text-neutral-300">Belum ada pengajuan buyer untuk menjadi seller.</div>
             ) : (
               apps.map(a => (
                 <div key={a.id} className="p-4 flex items-center justify-between gap-4">

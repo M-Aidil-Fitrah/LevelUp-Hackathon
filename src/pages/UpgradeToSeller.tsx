@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Store, Package, MapPin, Wallet, BarChart3, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
+import { loadApplications, saveApplications, type SellerApplication } from '@/lib/adminStorage';
 
 export default function UpgradeToSeller() {
     const navigate = useNavigate();
@@ -65,7 +66,7 @@ export default function UpgradeToSeller() {
                 }
             };
 
-            const response = await fetch(`${API_URL}/user/upgrade-to-seller`, {
+                        const response = await fetch(`${API_URL}/user/upgrade-to-seller`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -93,6 +94,22 @@ export default function UpgradeToSeller() {
             toast.error(msg, { title: 'Kesalahan', duration: 4000 });
         } finally {
             setLoading(false);
+            // Tambah pengajuan ke localStorage agar admin bisa melihat di halaman verifikasi
+            try {
+                const apps = loadApplications();
+                const exists = apps.some(a => a.email === email && (a.status ?? 'pending') === 'pending');
+                if (!exists) {
+                    const app: SellerApplication = {
+                        id: crypto.randomUUID(),
+                        email,
+                        fullname: fullName,
+                        storeName,
+                        createdAt: new Date().toISOString(),
+                        status: 'pending',
+                    };
+                    saveApplications([app, ...apps]);
+                }
+            } catch {}
         }
     };
 
