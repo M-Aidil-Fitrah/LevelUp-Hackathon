@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents } from 'react-leaflet';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useNavigate } from 'react-router-dom';
+import { useOutsideClick } from '../hooks/use-outside-click';
+import { Search, Store, MapPin, Tag, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 // We will provide explicit icons for all markers to avoid default icon path issues.
 
@@ -50,6 +52,34 @@ export default function UmkmNearby() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [radiusKm, setRadiusKm] = useState<number>(5); // 0.5 - 10 km
+  // Search UI
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [flyTarget, setFlyTarget] = useState<[number, number] | null>(null);
+  const searchWrapRef = useRef<HTMLDivElement>(null);
+  useOutsideClick(searchWrapRef, () => setShowSuggestions(false));
+  // Cards carousel state
+  const [cardResults, setCardResults] = useState<Umkm[]>([]);
+  const [showCards, setShowCards] = useState(false);
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  // Helper: highlight matched query inside a text (case-insensitive)
+  const Highlight = ({ text, query, className, strong = false }: { text?: string; query: string; className?: string; strong?: boolean }) => {
+    if (!text) return null;
+    const q = query.trim();
+    if (!q) return <span className={className}>{strong ? <strong>{text}</strong> : text}</span>;
+    const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`(${escapeRegExp(q)})`, 'ig');
+    const parts = text.split(re);
+    return (
+      <span className={className}>
+        {parts.map((part, idx) =>
+          re.test(part)
+            ? <strong key={idx}>{part}</strong>
+            : <span key={idx}>{part}</span>
+        )}
+      </span>
+    );
+  };
 
   // Get user location on mount
   useEffect(() => {
@@ -166,6 +196,82 @@ export default function UmkmNearby() {
     []
   );
 
+  // Suggestions based on search text
+  type Suggestion =
+    | { type: 'umkm'; id: string; label: string; lat: number; lng: number; alamat?: string; kategori?: string }
+    | { type: 'kategori'; id: string; label: string };
+
+  const suggestions = useMemo<Suggestion[]>(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [];
+
+    // UMKM matched by name
+    const byName: Suggestion[] = umkms
+      .filter((i) => i.nama_umkm.toLowerCase().includes(q))
+      .slice(0, 10)
+      .map((i) => ({ type: 'umkm', id: i._id, label: i.nama_umkm, lat: i.latitude, lng: i.longitude, alamat: i.alamat, kategori: i.kategori }));
+
+    // UMKM matched by address (still return as umkm suggestion)
+    const byAddr: Suggestion[] = [];
+    const seen = new Set(byName.map((s) => s.id));
+    for (const i of umkms) {
+      const addr = i.alamat?.trim();
+      if (!addr) continue;
+      if (addr.toLowerCase().includes(q) && !seen.has(i._id)) {
+        seen.add(i._id);
+        byAddr.push({ type: 'umkm', id: i._id, label: i.nama_umkm, lat: i.latitude, lng: i.longitude, alamat: i.alamat, kategori: i.kategori });
+        if (byAddr.length >= 10) break;
+      }
+    }
+
+    const catMatches: Suggestion[] = categories
+      .filter((c) => c.nama_kategori.toLowerCase().includes(q))
+      .slice(0, 10)
+      .map((c) => ({ type: 'kategori', id: c._id, label: c.nama_kategori }));
+
+    // Prioritize UMKM, then addresses, then categories
+    return [...byName, ...byAddr, ...catMatches].slice(0, 12);
+  }, [search, umkms, categories]);
+
+  function handlePickSuggestion(s: Suggestion) {
+    if (s.type === 'umkm') {
+      setSearch(s.label);
+      setSelectedUmkmId(s.id);
+      setFlyTarget([s.lat, s.lng]);
+      setShowSuggestions(false);
+      setShowCards(false);
+    } else if (s.type === 'kategori') {
+      setSelectedCategory(s.id);
+      setShowSuggestions(false);
+      setShowCards(false);
+    }
+  }
+
+  function handleSubmitSearch() {
+    const q = search.trim().toLowerCase();
+    if (!q) {
+      setShowCards(false);
+      setCardResults([]);
+      return;
+    }
+    // pick top 3 matches by name/address/category
+    let pool = umkms.filter((i) => (
+      i.nama_umkm.toLowerCase().includes(q) ||
+      i.alamat.toLowerCase().includes(q) ||
+      (i.kategori && i.kategori.toLowerCase().includes(q))
+    ));
+    // sort by distance if location is available
+    if (userLocation) {
+      pool = pool
+        .map((i) => ({ i, d: distanceKm(userLocation, { lat: i.latitude, lng: i.longitude }) }))
+        .sort((a, b) => a.d - b.d)
+        .map((x) => x.i);
+    }
+    setCardResults(pool.slice(0, 3));
+    setShowCards(true);
+    setShowSuggestions(false);
+  }
+
   // Distance helper (km)
   const distanceKm = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
     const toRad = (d: number) => (d * Math.PI) / 180;
@@ -234,31 +340,88 @@ export default function UmkmNearby() {
     ? mapCenter
     : [5.5418, 95.3413];
 
+  // Fly to a position when flyTarget changes
+  function MapFlyTo({ position }: { position: [number, number] | null }) {
+    const map = useMap();
+    useEffect(() => {
+      if (position) {
+        map.flyTo(position, 16, { duration: 0.8 });
+      }
+    }, [position, map]);
+    return null;
+  }
+
   return (
     <div className="h-screen w-screen relative bg-white">
       {/* Back to home button */}
       <button
         onClick={() => navigate('/')}
-        className="absolute top-3 left-3 z-[1100] bg-white/90 backdrop-blur-md border shadow-lg rounded-full px-4 py-2 text-sm hover:bg-white"
+        className="absolute top-3 left-16 z-[1100] bg-[#171717] text-white border border-[#2A2A2A] shadow-lg rounded-full px-4 py-2 text-sm hover:brightness-110"
       >
         ← Kembali ke Home
       </button>
       {/* Top filter bar */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] w-[96%] max-w-5xl">
-        <div className="bg-white/90 backdrop-blur-md border shadow-lg rounded-xl p-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="bg-[#171717] backdrop-blur-md border border-[#2A2A2A] shadow-lg rounded-xl p-3 text-white">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
             {/* Search */}
-            <input
-              type="text"
-              placeholder="Cari UMKM, alamat, atau kategori..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FF2000]"
-            />
+            <div className="relative md:col-span-1" ref={searchWrapRef}>
+              <div className="flex items-center gap-2 bg-[#111111] border border-[#2A2A2A] rounded-full px-4 py-2">
+                <Search size={18} className="text-gray-300" />
+                <input
+                  type="text"
+                  placeholder="Cari UMKM, alamat, atau kategori..."
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setShowSuggestions(true); }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSubmitSearch(); } }}
+                  className="w-full bg-transparent outline-none text-white placeholder:text-gray-400"
+                />
+              </div>
+
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute mt-2 w-full max-h-72 overflow-auto bg-[#171717] border border-[#2A2A2A] rounded-xl shadow-lg">
+                  {suggestions.map((s, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handlePickSuggestion(s)}
+                      className="w-full text-left px-4 py-2 hover:bg-[#222] focus:bg-[#222]"
+                    >
+                      {s.type === 'umkm' ? (
+                        <div className="flex items-start gap-3">
+                          <Store size={18} className="mt-1 text-gray-300" />
+                          <div>
+                            <div className="font-semibold text-white">
+                              <Highlight text={s.label} query={search} strong />
+                            </div>
+                            <div className="text-xs text-gray-400 flex items-center gap-2">
+                              <MapPin size={14} /> <Highlight text={s.alamat || '-'} query={search} />
+                            </div>
+                            {s.kategori && (
+                              <div className="text-xs text-gray-400 flex items-center gap-2 mt-0.5">
+                                <Tag size={14} /> <Highlight text={s.kategori} query={search} />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <Tag size={18} className="text-gray-300" />
+                          <div>
+                            <div className="text-white"><Highlight text={s.label} query={search} strong /></div>
+                            <div className="text-xs text-gray-400">Kategori</div>
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Category */}
             <select
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FF2000]"
+              className="w-full rounded-lg bg-[#111111] text-white border border-[#2A2A2A] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FF2000]"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
@@ -278,19 +441,19 @@ export default function UmkmNearby() {
                 value={radiusKm}
                 onChange={(e) => setRadiusKm(parseFloat(e.target.value))}
                 disabled={!userLocation}
-                className="flex-1"
+                className="flex-1 accent-[#FF2000]"
               />
-              <span className="text-sm text-gray-700 whitespace-nowrap">
+              <span className="text-sm text-gray-200 whitespace-nowrap">
                 {radiusKm.toFixed(1)} km
               </span>
             </div>
           </div>
 
           {locationStatus === 'denied' && (
-            <p className="text-xs text-yellow-700 mt-2">Aktifkan lokasi browser untuk menyaring berdasarkan jarak.</p>
+            <p className="text-xs text-yellow-400 mt-2">Aktifkan lokasi browser untuk menyaring berdasarkan jarak.</p>
           )}
           {error && (
-            <p className="text-xs text-red-600 mt-2">{error}</p>
+            <p className="text-xs text-red-400 mt-2">{error}</p>
           )}
         </div>
       </div>
@@ -298,6 +461,7 @@ export default function UmkmNearby() {
       {/* Map */}
       <div className="absolute inset-0">
         <MapContainer center={safeCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
+          <MapFlyTo position={flyTarget} />
           {/* Reset selected marker when clicking on empty map */}
           <MapClickResetter onReset={() => setSelectedUmkmId(null)} />
           <TileLayer
@@ -339,9 +503,66 @@ export default function UmkmNearby() {
         </MapContainer>
       </div>
 
+      {/* Cards Carousel (shown after Enter) */}
+      {showCards && cardResults.length > 0 && (
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-24 z-[1000] w-[96%] max-w-5xl">
+          <div className="bg-[#171717] text-white border border-[#2A2A2A] rounded-xl p-3 shadow-lg relative">
+            <button
+              onClick={() => setShowCards(false)}
+              className="absolute right-3 top-3 p-1 rounded hover:bg-[#222]"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+            <div className="flex items-center gap-2">
+              <button
+                className="p-2 rounded-full hover:bg-[#222]"
+                onClick={() => { const c = carouselRef.current; if (c) c.scrollBy({ left: -300, behavior: 'smooth' }); }}
+                aria-label="Prev"
+              >
+                <ChevronLeft />
+              </button>
+              <div
+                ref={carouselRef}
+                className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory px-1"
+              >
+                {cardResults.map((i) => {
+                  const imgSrc = i.thumbnail || 'https://placehold.co/400x240?text=UMKM';
+                  const distance = userLocation ? distanceKm(userLocation, { lat: i.latitude, lng: i.longitude }) : null;
+                  return (
+                    <button
+                      key={i._id}
+                      onClick={() => { setSelectedUmkmId(i._id); setFlyTarget([i.latitude, i.longitude]); }}
+                      className="min-w-[280px] snap-center bg-[#111111] border border-[#2A2A2A] rounded-lg overflow-hidden text-left hover:brightness-110"
+                    >
+                      <img src={imgSrc} alt={i.nama_umkm} className="w-full h-40 object-cover" />
+                      <div className="p-3">
+                        <div className="font-semibold text-white mb-1 line-clamp-1">{i.nama_umkm}</div>
+                        <div className="text-xs text-gray-400 line-clamp-2">{i.alamat || 'Belum ada deskripsi'}</div>
+                        <div className="mt-2 flex items-center justify-between text-xs text-gray-300">
+                          <div className="flex items-center gap-1"><Tag size={14} /> {i.kategori || '-'}</div>
+                          {distance !== null && (<div>{distance.toFixed(1)} km</div>)}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                className="p-2 rounded-full hover:bg-[#222]"
+                onClick={() => { const c = carouselRef.current; if (c) c.scrollBy({ left: 300, behavior: 'smooth' }); }}
+                aria-label="Next"
+              >
+                <ChevronRight />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bottom badge with count */}
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000]">
-        <div className="bg-white/90 backdrop-blur-md border shadow-lg rounded-full px-4 py-2 text-sm">
+        <div className="bg-[#171717] text-white backdrop-blur-md border border-[#2A2A2A] shadow-lg rounded-full px-4 py-2 text-sm">
           Menampilkan {filtered.length} UMKM
         </div>
       </div>
