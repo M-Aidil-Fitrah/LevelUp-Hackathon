@@ -33,6 +33,20 @@ const Hero = () => {
         </span>
       </div>
 
+      {/* Mascot on the right side (above background word, below main text) */}
+      <div
+        aria-hidden
+        className="hidden md:block absolute right-2 sm:right-4 md:right-6 lg:right-10 xl:right-14 bottom-0 z-[5] pointer-events-none"
+      >
+    <img
+     src={"/assets/maskot.png"}
+          alt="LevelUp Mascot"
+          loading="lazy"
+          decoding="async"
+            className="w-[260px] sm:w-[320px] md:w-[400px] lg:w-[520px] xl:w-[620px] h-auto drop-shadow-xl select-none"
+        />
+      </div>
+
       <div className="w-full px-8 md:px-12 lg:px-16 xl:px-24 py-20 md:py-24">
         <div className="max-w-[1100px] relative z-10">
           {/* Headline: render fast static text first to improve LCP; swap to animated when idle */}
@@ -40,8 +54,8 @@ const Hero = () => {
             {/* Static immediate render for LCP */}
             {!showAnimated && (
               <h1 className="text-[42px] sm:text-[56px] md:text-[84px] lg:text-[104px] xl:text-[116px] font-semibold">
-                <span className="block">Platform yang</span>
-                <span className="block">memberdayakan</span>
+                <span className="block">LevelUp-</span>
+                <span className="block">Platform untuk</span>
                 <span className="block">UMKM Anda</span>
               </h1>
             )}
@@ -49,14 +63,14 @@ const Hero = () => {
             {showAnimated && AnimatedComp && (
               <div aria-hidden>
                 <AnimatedComp
-                  words={"Platform yang"}
+                  words={"LevelUp-"}
                   duration={0.5}
                   filter={true}
                   startDelay={0}
                   textClassName="block text-[42px] sm:text-[56px] md:text-[84px] lg:text-[104px] xl:text-[116px] font-semibold"
                 />
                 <AnimatedComp
-                  words={"memberdayakan"}
+                  words={"Platform untuk"}
                   duration={0.5}
                   filter={true}
                   startDelay={0.4}
@@ -77,12 +91,12 @@ const Hero = () => {
           <div className="mt-7 md:mt-9 max-w-[720px] text-slate-700">
             {!showAnimated && (
               <p className="text-[18px] sm:text-[20px] md:text-[22px] lg:text-[24px] leading-[1.5]">
-                Tingkatkan bisnis UMKM Anda dengan teknologi digital. Kelola inventori, penjualan, dan keuangan dengan mudah — cukup dari satu platform terpadu.
+                Kelola Produkmu di Dashboard Seller, Jual di Marketplace, Pesan Lewat UMKM Nearby, dilengkapi Chatbot AI yang Canggih.
               </p>
             )}
             {showAnimated && AnimatedComp && (
               <AnimatedComp
-                words={"Tingkatkan bisnis UMKM Anda dengan teknologi digital. Kelola inventori, penjualan, dan keuangan dengan mudah — cukup dari satu platform terpadu."}
+                words={"Kelola Produkmu di Dashboard Seller, Jual di Marketplace, Pesan Lewat UMKM Nearby, dilengkapi Chatbot AI yang Canggih."}
                 duration={0.4}
                 filter={true}
                 startDelay={1.2}
