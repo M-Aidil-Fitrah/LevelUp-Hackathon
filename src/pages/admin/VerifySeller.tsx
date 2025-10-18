@@ -35,13 +35,19 @@ export default function VerifySellerPage() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden md:flex-row bg-gray-100 dark:bg-neutral-900">
-      <AdminSidebar active="verify" onChange={() => {}} />
+      <AdminSidebar
+        active="verify"
+        onChange={(next) => {
+          if (next === 'home') navigate('/admin/dashboard');
+          if (next === 'verify') navigate('/admin/verify-seller');
+        }}
+      />
       <div className="flex flex-1">
         <div className="flex h-full w-full flex-1 flex-col gap-2 p-3 md:p-8">
           <div className="flex items-center justify-between mb-2 gap-2">
             <h1 className="text-lg md:text-xl font-semibold text-neutral-900 dark:text-neutral-100">Verifikasi Seller</h1>
             <div className="flex items-center gap-2">
-              <button onClick={() => navigate('/admin/dashboard')} className="text-xs md:text-sm px-3 py-1.5 rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Ke Dashboard</button>
+              <button onClick={() => navigate('/')} className="text-xs md:text-sm px-3 py-1.5 rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Ke Beranda</button>
             </div>
           </div>
 
