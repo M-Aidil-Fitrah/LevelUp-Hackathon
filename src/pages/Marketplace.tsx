@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { DirectionAwareHover } from "@/components/ui/direction-aware-hover";
 import PillNav from "@/components/PillNav";
 import { Footer } from "@/components/Footer";
+import { LazyVisible } from "@/hooks/use-in-viewport";
 
 interface Category {
   _id: string;
@@ -427,26 +428,28 @@ export default function Marketplace() {
             </div>
           ) : (
             pageItems.map((item) => (
-              <Link key={item._id} to={`/marketplace/${item._id}`} className="block">
-                <DirectionAwareHover
-                  imageUrl={item.thumbnail || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400'}
-                  className="w-full h-64 md:h-80"
-                  showTextAlways={true}
-                  childrenClassName="text-white absolute bottom-4 left-4 z-40 px-3 py-2 rounded-md shadow-sm"
-                >
-                  <div>
-                    <p className="font-semibold text-lg line-clamp-1">{item.nama_umkm}</p>
-                    <p className="text-sm line-clamp-1">
-                      {item.priceRange}
-                      {item.distance && ` • ${item.distance}`}
-                      {` • ${item.kategori}`}
-                    </p>
-                    <p className="text-xs mt-1 line-clamp-1 opacity-90">
-                      📍 {item.alamat}
-                    </p>
-                  </div>
-                </DirectionAwareHover>
-              </Link>
+              <LazyVisible key={item._id} placeholderHeight={320} options={{ rootMargin: '200px' }}>
+                <Link to={`/marketplace/${item._id}`} className="block">
+                  <DirectionAwareHover
+                    imageUrl={item.thumbnail || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400'}
+                    className="w-full h-64 md:h-80"
+                    showTextAlways={true}
+                    childrenClassName="text-white absolute bottom-4 left-4 z-40 px-3 py-2 rounded-md shadow-sm"
+                  >
+                    <div>
+                      <p className="font-semibold text-lg line-clamp-1">{item.nama_umkm}</p>
+                      <p className="text-sm line-clamp-1">
+                        {item.priceRange}
+                        {item.distance && ` • ${item.distance}`}
+                        {` • ${item.kategori}`}
+                      </p>
+                      <p className="text-xs mt-1 line-clamp-1 opacity-90">
+                        📍 {item.alamat}
+                      </p>
+                    </div>
+                  </DirectionAwareHover>
+                </Link>
+              </LazyVisible>
             ))
           )}
         </div>
@@ -489,7 +492,9 @@ export default function Marketplace() {
           </div>
         )}
       </div>
-      <Footer />
+      <LazyVisible placeholderHeight={200} options={{ rootMargin: '200px' }}>
+        <Footer />
+      </LazyVisible>
     </div>
   );
 }

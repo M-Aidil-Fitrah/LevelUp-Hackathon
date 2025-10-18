@@ -723,6 +723,11 @@ const MagicBento: React.FC<BentoProps> = ({
                       alt={card.title || 'card image'}
                       className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none opacity-90"
                       style={{ filter: 'grayscale(100%)', mixBlendMode: 'screen' }}
+                      loading="lazy"
+                      decoding="async"
+                      fetchPriority="low"
+                      width={800}
+                      height={600}
                       onLoad={e => {
                         const img = e.currentTarget;
                         const parent = img.parentElement as HTMLElement;

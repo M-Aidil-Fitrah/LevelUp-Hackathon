@@ -1,20 +1,21 @@
 import './App.css'
+import React, { Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import Login from './pages/auth/Login'
-import Register from './pages/auth/Register'
 import LandingPage from './pages/LandingPage'
-import ChatbotAI from './pages/ChatbotAI'
-import ChatBubble from './components/chatbot/ChatBubble'
-import Marketplace from './pages/Marketplace'
-import MarketplaceProduct from './pages/MarketplaceProduct'
-import ProductDetail from './pages/ProductDetail'
-import UpgradeToSeller from './pages/UpgradeToSeller'
-import SellerDashboard from './pages/seller/SellerDashboard'
-import AddProductPage from './pages/seller/AddProduct'
-import EditProductPage from './pages/seller/EditProduct'
-import DeleteProductPage from './pages/seller/DeleteProduct'
-import AdminDashboard from './pages/admin/AdminDashboard'
-import VerifySellerPage from './pages/admin/VerifySeller'
+// Lazy-load all non-landing routes to reduce initial bundle
+const Login = React.lazy(() => import('./pages/auth/Login'))
+const Register = React.lazy(() => import('./pages/auth/Register'))
+const ChatbotAI = React.lazy(() => import('./pages/ChatbotAI'))
+const ChatBubble = React.lazy(() => import('./components/chatbot/ChatBubble'))
+const Marketplace = React.lazy(() => import('./pages/Marketplace'))
+const MarketplaceProduct = React.lazy(() => import('./pages/MarketplaceProduct'))
+const UpgradeToSeller = React.lazy(() => import('./pages/UpgradeToSeller'))
+const SellerDashboard = React.lazy(() => import('./pages/seller/SellerDashboard'))
+const AddProductPage = React.lazy(() => import('./pages/seller/AddProduct'))
+const EditProductPage = React.lazy(() => import('./pages/seller/EditProduct'))
+const DeleteProductPage = React.lazy(() => import('./pages/seller/DeleteProduct'))
+const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'))
+const VerifySellerPage = React.lazy(() => import('./pages/admin/VerifySeller'))
 
 function AppShell() {
 	const location = useLocation();
@@ -27,12 +28,12 @@ function AppShell() {
 		path.startsWith('/seller');
 	return (
 		<>
+			<Suspense fallback={<div />}> 
 			<Routes>
 				<Route path="/" element={<LandingPage />} />
 				<Route path="/chatbot" element={<ChatbotAI />} />
 				<Route path="/marketplace" element={<Marketplace />} />
 				<Route path="/marketplace-product" element={<MarketplaceProduct />} />
-				<Route path="/product-detail" element={<ProductDetail />} />
 				<Route path="/login" element={<Login />} />
 				<Route path="/register" element={<Register />} />
 				<Route path="/upgrade-to-seller" element={<UpgradeToSeller />} />
@@ -45,7 +46,12 @@ function AppShell() {
 				<Route path="*" element={<Navigate to="/" replace />} />
 
 			</Routes>
-			{!hideChat && <ChatBubble />}
+			</Suspense>
+			{!hideChat && (
+			  <Suspense fallback={null}>
+			    <ChatBubble />
+			  </Suspense>
+			)}
 		</>
 	)
 }
