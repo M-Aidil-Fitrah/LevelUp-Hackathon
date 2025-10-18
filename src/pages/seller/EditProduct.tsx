@@ -1,28 +1,79 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/Toast';
-import { getUser, loadProducts, saveProducts, type Product } from '@/lib/sellerStorage';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://levelup-backend-production-839e.up.railway.app/api';
+
+interface Product {
+  _id: string;
+  umkm_id: string;
+  nama_product: string;
+  harga: number;
+  thumbnail?: string;
+  deskripsi_produk?: string;
+}
 
 export default function EditProductPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const user = useMemo(() => getUser(), []);
-  const email = user?.email;
+  const token = localStorage.getItem('token');
 
-  const [items, setItems] = useState<Product[]>(() => loadProducts(email));
+  const [items, setItems] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<{ name: string; price: string; image?: string; description?: string }>({ name: '', price: '', image: '', description: '' });
+  const [form, setForm] = useState<{ 
+    nama_product: string; 
+    harga: string; 
+    image: File | null;
+    imagePreview?: string;
+    deskripsi_produk?: string;
+  }>({ nama_product: '', harga: '', image: null, imagePreview: '', deskripsi_produk: '' });
 
   // AI assist for description
   const [aiPrompt, setAiPrompt] = useState<string>('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
 
+  // Fetch products on mount
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/product/my-products`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      
+      if (data.status === 200) {
+        setItems(data.data);
+      } else {
+        toast.error(data.message || 'Gagal memuat produk', { title: 'Error' });
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast.error('Gagal memuat produk', { title: 'Error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const selectItem = (id: string) => {
-    const p = items.find(x => x.id === id);
+    const p = items.find(x => x._id === id);
     if (!p) return;
     setEditingId(id);
-    setForm({ name: p.name, price: String(p.price), image: p.image || '', description: p.description || '' });
+    setForm({ 
+      nama_product: p.nama_product, 
+      harga: String(p.harga), 
+      image: null,
+      imagePreview: p.thumbnail || '', 
+      deskripsi_produk: p.deskripsi_produk || '' 
+    });
   };
 
   const handleImageUpload: React.ChangeEventHandler<HTMLInputElement> = (e) => {

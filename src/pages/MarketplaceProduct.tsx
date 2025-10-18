@@ -1,130 +1,40 @@
 "use client";
 
 import { useEffect, useMemo, useId, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import PillNav from "@/components/PillNav";
 import { Footer } from "@/components/Footer";
 import { useOutsideClick } from "@/hooks/use-outside-click";
 
-type Category = "kerajinan" | "kuliner" | "usaha" | "fashion" | "lainnya";
+const API_URL = 'https://levelup-backend-production-839e.up.railway.app/api';
 
-type Store = {
-  id: number;
-  name: string;
-  category: Category;
-  distanceKm: number;
-  imageUrl: string;
-  description?: string;
-  address?: string;
+type Umkm = {
+  _id: string;
+  nama_umkm: string;
+  alamat: string;
+  latitude?: number;
+  longitude?: number;
+  thumbnail?: string;
+  caption?: string;
+  category_id?: {
+    _id: string;
+    nama_kategori: string;
+  };
 };
 
 type Product = {
-  id: string; // combine storeId and index
-  storeId: number;
-  name: string;
-  category: Category;
-  price: number; // in IDR thousands (fixed price)
-  imageUrl: string;
-  description?: string;
-  distanceKm: number; // inherited from store
-  address?: string; // inherited from store
+  _id: string;
+  umkm_id: string | Umkm;
+  nama_product: string;
+  harga: number;
+  thumbnail?: string;
+  deskripsi_produk?: string;
+  created_at: string;
+  updated_at: string;
 };
 
-const STORES: Store[] = [
-  {
-    id: 1,
-    name: "Toko Batik Solo Pak Jono",
-    category: "fashion",
-    distanceKm: 2.1,
-    imageUrl: "/assets/images/foto1.png",
-    description: "Batik tulis motif klasik, karya UMKM lokal.",
-    address: "Jl. Slamet Riyadi No. 123, Solo",
-  },
-  {
-    id: 2,
-    name: "Toko Keripik Bu Sari",
-    category: "kuliner",
-    distanceKm: 3.5,
-    imageUrl: "/assets/images/foto1.png",
-    description: "Cemilan garing rasa pedas gurih.",
-    address: "Jl. Diponegoro No. 45, Solo",
-  },
-  {
-    id: 3,
-    name: "Toko Rajut Ibu Rina",
-    category: "kerajinan",
-    distanceKm: 1.2,
-    imageUrl: "/assets/images/foto1.png",
-    description: "Tas rajut unik berbagai warna.",
-    address: "Jl. Gatot Subroto No. 8, Solo",
-  },
-  {
-    id: 4,
-    name: "Toko Cuci Sepatu Pak Arif",
-    category: "usaha",
-    distanceKm: 5.2,
-    imageUrl: "/assets/images/foto1.png",
-    description: "Layanan bersih maksimal untuk sepatu kesayangan.",
-    address: "Jl. Veteran No. 77, Solo",
-  },
-  {
-    id: 5,
-    name: "Toko Kue Bu Lina",
-    category: "kuliner",
-    distanceKm: 4.1,
-    imageUrl: "/assets/images/foto1.png",
-    description: "Lapis legit premium buatan rumahan.",
-    address: "Jl. Sudirman No. 20, Solo",
-  },
-  {
-    id: 6,
-    name: "Toko Aksesoris Mak Tuti",
-    category: "kerajinan",
-    distanceKm: 2.8,
-    imageUrl: "/assets/images/foto1.png",
-    description: "Aksesoris handmade khas nusantara.",
-    address: "Jl. Gajah Mada No. 12, Solo",
-  },
-  {
-    id: 7,
-    name: "Toko Tenun Pak Agus",
-    category: "fashion",
-    distanceKm: 3.3,
-    imageUrl: "/assets/images/foto1.png",
-    description: "Outer stylish berbahan tenun ikat.",
-    address: "Jl. Ahmad Yani No. 99, Solo",
-  },
-  {
-    id: 8,
-    name: "Toko Kopi Pak Dedi",
-    category: "lainnya",
-    distanceKm: 6.7,
-    imageUrl: "/assets/images/foto1.png",
-    description: "Biji kopi robusta sangrai medium.",
-    address: "Jl. Rajiman No. 5, Solo",
-  },
-  {
-    id: 9,
-    name: "Toko Mukena Hj. Siti",
-    category: "fashion",
-    distanceKm: 1.9,
-    imageUrl: "/assets/images/foto1.png",
-    description: "Mukena adem dan nyaman dipakai.",
-    address: "Jl. Mangkunegara No. 14, Solo",
-  },
-  {
-    id: 10,
-    name: "Toko Nasi Box Mba Yuni",
-    category: "kuliner",
-    distanceKm: 7.5,
-    imageUrl: "/assets/images/foto1.png",
-    description: "Paket nasi lengkap untuk acara.",
-    address: "Jl. Slamet Riyadi No. 200, Solo",
-  },
-];
-
-type SortBy = "price-asc" | "price-desc" | "distance" | "name-asc" | "";
+type SortBy = "price-asc" | "price-desc" | "name-asc" | "";
 
 export default function MarketplaceProduct() {
   const [search, setSearch] = useState("");
@@ -132,55 +42,91 @@ export default function MarketplaceProduct() {
   const [page, setPage] = useState(1);
   const pageSize = 8;
 
+  // State untuk data dari backend
+  const [selectedUmkm, setSelectedUmkm] = useState<Umkm | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   // State dan id untuk expandable cards
   const [active, setActive] = useState<Product | boolean | null>(null);
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
-  const location = useLocation();
+  
+  // Get UMKM ID from URL params
+  const { id: umkmId } = useParams<{ id: string }>();
 
-  // Halaman produk tidak auto-buka modal; hanya menggunakan storeId untuk menampilkan produk toko tersebut.
+  // Fetch UMKM dan produk dari backend
+  useEffect(() => {
+    if (!umkmId) {
+      setSelectedUmkm(null);
+      setProducts([]);
+      return;
+    }
 
-  // Cari toko terpilih & generate produk untuk toko
-  const params = new URLSearchParams(location.search);
-  const selectedStoreId = params.get("storeId");
-  const selectedStore = selectedStoreId
-    ? STORES.find((s) => String(s.id) === selectedStoreId)
-    : undefined;
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Fetch UMKM detail
+        const umkmResponse = await fetch(`${API_URL}/umkm/${umkmId}`);
+        const umkmData = await umkmResponse.json();
+        
+        if (umkmData.status === 200 && umkmData.data) {
+          setSelectedUmkm(umkmData.data);
+        } else {
+          throw new Error('UMKM tidak ditemukan');
+        }
 
-  const productsForStore = useMemo(() => {
-    if (!selectedStore) return [] as Product[];
-    return createProductsForStore(selectedStore);
-  }, [selectedStoreId]);
+        // Fetch all products and filter by umkm_id
+        const productsResponse = await fetch(`${API_URL}/product/all`);
+        const productsData = await productsResponse.json();
+        
+        if (productsData.status === 200 && productsData.data) {
+          // Filter products untuk UMKM ini
+          const filteredProducts = productsData.data.filter((p: Product) => {
+            const pUmkmId = typeof p.umkm_id === 'string' ? p.umkm_id : p.umkm_id?._id;
+            return pUmkmId === umkmId;
+          });
+          setProducts(filteredProducts);
+        }
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err instanceof Error ? err.message : 'Gagal memuat data');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Filter + sort di tingkat produk
+    fetchData();
+  }, [umkmId]);
+
+  // Filter + sort produk
   const filtered = useMemo(() => {
-    let items = productsForStore.filter((item) => {
+    let items = products.filter((item) => {
       const q = search.trim().toLowerCase();
       const bySearch =
         !q ||
-        item.name.toLowerCase().includes(q) ||
-        (item.description?.toLowerCase().includes(q) ?? false);
+        item.nama_product.toLowerCase().includes(q) ||
+        (item.deskripsi_produk?.toLowerCase().includes(q) ?? false);
       return bySearch;
     });
 
     switch (sortBy) {
       case "price-asc":
-        items = items.sort((a, b) => a.price - b.price);
+        items = items.sort((a, b) => a.harga - b.harga);
         break;
       case "price-desc":
-        items = items.sort((a, b) => b.price - a.price);
-        break;
-      case "distance":
-        items = items.sort((a, b) => a.distanceKm - b.distanceKm);
+        items = items.sort((a, b) => b.harga - a.harga);
         break;
       case "name-asc":
-        items = items.sort((a, b) => a.name.localeCompare(b.name));
+        items = items.sort((a, b) => a.nama_product.localeCompare(b.nama_product));
         break;
       default:
         break;
     }
     return items;
-  }, [search, sortBy, productsForStore]);
+  }, [search, sortBy, products]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, pageCount);
@@ -190,7 +136,7 @@ export default function MarketplaceProduct() {
 
   useEffect(() => {
     setPage(1);
-  }, [search, sortBy, selectedStoreId]);
+  }, [search, sortBy, umkmId]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -239,11 +185,21 @@ export default function MarketplaceProduct() {
 
       <div className="mx-auto max-w-7xl px-4 pb-8">
         <h1 className="text-3xl font-bold tracking-tight">Produk Toko</h1>
-        {selectedStore ? (
-          <p className="text-gray-500 mt-1">
-            {selectedStore.name} · {capitalize(selectedStore.category)} · {selectedStore.distanceKm}km <br></br>
-            {selectedStore.address}
-          </p>
+        {loading ? (
+          <p className="text-gray-500 mt-1">Memuat data...</p>
+        ) : error ? (
+          <p className="text-red-500 mt-1">{error}</p>
+        ) : selectedUmkm ? (
+          <div className="mt-2">
+            <p className="text-xl font-semibold">{selectedUmkm.nama_umkm}</p>
+            <p className="text-gray-500">
+              {selectedUmkm.category_id?.nama_kategori || 'Kategori tidak tersedia'}
+            </p>
+            <p className="text-gray-600 text-sm">{selectedUmkm.alamat}</p>
+            {selectedUmkm.caption && (
+              <p className="text-gray-600 text-sm mt-1">{selectedUmkm.caption}</p>
+            )}
+          </div>
         ) : (
           <p className="text-gray-500 mt-1">Silakan pilih toko dari halaman Marketplace.</p>
         )}
@@ -306,7 +262,7 @@ export default function MarketplaceProduct() {
           {active && typeof active === "object" ? (
             <div className="fixed inset-0 grid place-items-center z-[100]">
               <motion.button
-                key={`button-${active.name}-${id}`}
+                key={`button-${active.nama_product}-${id}`}
                 layout
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -318,16 +274,16 @@ export default function MarketplaceProduct() {
                 <CloseIcon />
               </motion.button>
               <motion.div
-                layoutId={`card-${active.id}-${id}`}
+                layoutId={`card-${active._id}-${id}`}
                 ref={ref}
                 className="w-full max-w-[520px] h-full md:h-fit md:max-h-[90%] flex flex-col bg-white dark:bg-neutral-900 sm:rounded-3xl overflow-hidden"
               >
-                <motion.div layoutId={`image-${active.id}-${id}`}>
+                <motion.div layoutId={`image-${active._id}-${id}`}>
                   <img
                     width={200}
                     height={200}
-                    src={active.imageUrl}
-                    alt={active.name}
+                    src={active.thumbnail || '/assets/images/foto1.png'}
+                    alt={active.nama_product}
                     className="w-full h-80 lg:h-80 sm:rounded-tr-lg sm:rounded-tl-lg object-cover object-center"
                   />
                 </motion.div>
@@ -336,20 +292,20 @@ export default function MarketplaceProduct() {
                   <div className="flex justify-between items-start p-4">
                     <div>
                       <motion.h3
-                        layoutId={`title-${active.id}-${id}`}
+                        layoutId={`title-${active._id}-${id}`}
                         className="font-semibold text-white text-lg"
                       >
-                        {active.name}
+                        {active.nama_product}
                       </motion.h3>
                       <motion.p
-                        layoutId={`description-${active.id}-${id}`}
+                        layoutId={`description-${active._id}-${id}`}
                         className="text-neutral-200 text-sm"
                       >
-                        {active.description}
+                        {active.deskripsi_produk || 'Tidak ada deskripsi'}
                       </motion.p>
                       <div className="mt-2 text-sm text-neutral-300">
                         <p>
-                          Harga: Rp{(active.price * 1000).toLocaleString("id-ID")}
+                          Harga: Rp{active.harga.toLocaleString("id-ID")}
                         </p>
                       </div>
                     </div>
@@ -383,43 +339,56 @@ export default function MarketplaceProduct() {
         </AnimatePresence>
 
         {/* List menggunakan expandable standard: preview hanya nama, foto, harga */}
-  <ul className="mt-6 mx-auto w-full gap-4 max-w-5xl md:max-w-6xl">
-          {!selectedStore ? (
+        <ul className="mt-6 mx-auto w-full gap-4 max-w-5xl md:max-w-6xl">
+          {loading ? (
             <li className="text-center text-gray-500 py-16">
-              Belum ada toko terpilih.
+              <div className="flex flex-col items-center gap-2">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                <span>Memuat produk...</span>
+              </div>
+            </li>
+          ) : !selectedUmkm ? (
+            <li className="text-center text-gray-500 py-16">
+              Belum ada toko terpilih. Silakan pilih UMKM dari halaman Marketplace.
+            </li>
+          ) : pageItems.length === 0 && search ? (
+            <li className="text-center text-gray-500 py-16">
+              Tidak ada produk yang cocok dengan pencarian "{search}".
             </li>
           ) : pageItems.length === 0 ? (
-            <li className="text-center text-gray-500 py-16">Tidak ada produk yang cocok.</li>
+            <li className="text-center text-gray-500 py-16">
+              Toko ini belum memiliki produk.
+            </li>
           ) : (
             pageItems.map((item) => (
               <motion.li
-                layoutId={`card-${item.id}-${id}`}
-                key={`card-${item.id}`}
+                layoutId={`card-${item._id}-${id}`}
+                key={`card-${item._id}`}
                 onClick={() => setActive(item)}
                 className="p-4 flex flex-col md:flex-row justify-between items-center bg-white hover:bg-neutral-100 rounded-xl cursor-pointer border border-gray-200"
               >
                 <div className="flex gap-4 flex-col md:flex-row items-center">
-                  <motion.div layoutId={`image-${item.id}-${id}`}>
+                  <motion.div layoutId={`image-${item._id}-${id}`}>
                     <img
                       width={100}
                       height={100}
-                      src={item.imageUrl}
-                      alt={item.name}
+                      src={item.thumbnail || '/assets/images/foto1.png'}
+                      alt={item.nama_product}
                       className="h-40 w-40 md:h-20 md:w-20 rounded-lg object-cover object-center"
                     />
                   </motion.div>
                   <div>
                     <motion.h3
-                      layoutId={`title-${item.id}-${id}`}
+                      layoutId={`title-${item._id}-${id}`}
                       className="font-medium text-neutral-900 text-center md:text-left"
                     >
-                      {item.name}
+                      {item.nama_product}
                     </motion.h3>
                     <motion.p
-                      layoutId={`description-${item.id}-${id}`}
+                      layoutId={`description-${item._id}-${id}`}
                       className="text-neutral-700 text-center md:text-left"
                     >
-                      Rp{(item.price * 1000).toLocaleString("id-ID")}
+                      Rp{item.harga.toLocaleString("id-ID")}
                     </motion.p>
                   </div>
                 </div>
@@ -499,36 +468,4 @@ function CloseIcon() {
       <path d="M6 6l12 12" />
     </motion.svg>
   );
-}
-
-function capitalize<T extends string>(s: T): Capitalize<T> {
-  return (s.charAt(0).toUpperCase() + s.slice(1)) as Capitalize<T>;
-}
-
-// Helpers
-function createProductsForStore(store: Store): Product[] {
-  // Mock: generate 6 products using store context
-  const baseNames: Record<Category, string[]> = {
-    fashion: ["Batik Tulis", "Kemeja Tenun", "Outer Tenun", "Sarung Songket", "Kain Lurik", "Blouse Batik"],
-    kuliner: ["Keripik Pedas", "Kue Lapis", "Kopi Robusta", "Nasi Box", "Rendang Vacum", "Sambal Roa"],
-    kerajinan: ["Tas Rajut", "Gantungan Kunci", "Dompet Anyam", "Vas Gerabah", "Kalung Manik", "Totebag Rajut"],
-    usaha: ["Cuci Sepatu Reguler", "Deep Clean", "Repaint Sepatu", "Laundry Kecil", "Laundry Besar", "Fast Clean"],
-    lainnya: ["Biji Kopi", "Madu Hutan", "Teh Herbal", "Lilin Aromaterapi", "Sabun Alami", "Minyak Kelapa"],
-  };
-
-  const names = baseNames[store.category];
-  return names.map((n, idx) => {
-    const price = 20 + idx * 10; // ribuan (fixed)
-    return {
-      id: `${store.id}-${idx + 1}`,
-      storeId: store.id,
-      name: n,
-      category: store.category,
-      price,
-      imageUrl: store.imageUrl,
-      description: store.description,
-      distanceKm: store.distanceKm,
-      address: store.address,
-    } as Product;
-  });
 }

@@ -36,7 +36,7 @@ function AppShell() {
 				<Route path="/" element={<LandingPage />} />
 				<Route path="/chatbot" element={<ChatbotAI />} />
 				<Route path="/marketplace" element={<Marketplace />} />
-				<Route path="/marketplace-product" element={<MarketplaceProduct />} />
+				<Route path="/marketplace/:id" element={<MarketplaceProduct />} />
 				<Route path="/umkm-nearby" element={<UmkmNearby />} />
 				<Route path="/login" element={<Login />} />
 				<Route path="/register" element={<Register />} />
