@@ -25,7 +25,7 @@ function AppShell() {
 		path.startsWith('/register') ||
 		path.startsWith('/chatbot') ||
 		path.startsWith('/admin') ||
-		path.startsWith('/seller');git 
+		path.startsWith('/seller');
 	return (
 		<>
 			<Suspense fallback={<div />}> 
