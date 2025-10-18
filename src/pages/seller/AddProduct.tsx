@@ -46,7 +46,13 @@ export default function AddProductPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-lg md:text-xl font-semibold text-neutral-900 dark:text-neutral-100">Tambah Produk</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg md:text-xl font-semibold text-neutral-900 dark:text-neutral-100">Tambah Produk</h2>
+        <div className="flex gap-2">
+          <button onClick={()=>navigate('/')} className="text-xs md:text-sm px-3 py-1.5 rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Ke Beranda</button>
+          <button onClick={()=>navigate('/seller/dashboard')} className="text-xs md:text-sm px-3 py-1.5 rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Ke Dashboard</button>
+        </div>
+      </div>
       <form onSubmit={handleSubmit} className="rounded-xl border border-neutral-200 dark:border-white/10 p-4 md:p-5 grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1 text-neutral-800 dark:text-neutral-200">Nama Produk</label>

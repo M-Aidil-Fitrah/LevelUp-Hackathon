@@ -52,7 +52,13 @@ export default function EditProductPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-lg md:text-xl font-semibold text-neutral-900 dark:text-neutral-100">Edit Produk</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg md:text-xl font-semibold text-neutral-900 dark:text-neutral-100">Edit Produk</h2>
+        <div className="flex gap-2">
+          <button onClick={()=>navigate('/')} className="text-xs md:text-sm px-3 py-1.5 rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Ke Beranda</button>
+          <button onClick={()=>navigate('/seller/dashboard')} className="text-xs md:text-sm px-3 py-1.5 rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Ke Dashboard</button>
+        </div>
+      </div>
       <div className="rounded-xl border border-neutral-200 dark:border-white/10 divide-y divide-neutral-200 dark:divide-white/10">
         {items.length === 0 ? (
           <div className="p-6 text-sm text-neutral-600 dark:text-neutral-300">Belum ada produk.</div>

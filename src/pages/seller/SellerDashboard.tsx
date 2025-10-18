@@ -13,7 +13,7 @@ type Product = {
 };
 
 // Helpers for localStorage per-user
-const getUser = (): { role?: string; email?: string } | null => {
+const getUser = (): { role?: string; email?: string; fullname?: string; name?: string; storeName?: string } | null => {
   try {
     const raw = localStorage.getItem('user');
     return raw ? JSON.parse(raw) : null;
@@ -29,6 +29,8 @@ export default function SellerDashboard() {
 
   const user = useMemo(() => getUser(), []);
   const email = user?.email;
+  const fullName = useMemo(() => user?.fullname || user?.name || (email ? email.split('@')[0] : 'Pengguna'), [user, email]);
+  const storeName = useMemo(() => user?.storeName || `Toko ${fullName}` , [user, fullName]);
   const [products, setProducts] = useState<Product[]>([]);
   const [section, setSection] = useState<SellerSection>('home');
 
@@ -132,9 +134,12 @@ export default function SellerDashboard() {
       <SellerSidebar active={section} onChange={setSection} />
       <div className="flex flex-1">
         <div className="flex h-full w-full flex-1 flex-col gap-2 p-3 md:p-8">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-2 gap-2">
             <h1 className="text-lg md:text-xl font-semibold text-neutral-900 dark:text-neutral-100">Dashboard Seller</h1>
-            <button onClick={() => navigate('/marketplace')} className="text-xs md:text-sm px-3 py-1.5 rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Ke Marketplace</button>
+            <div className="flex items-center gap-2">
+              <button onClick={() => navigate('/')} className="text-xs md:text-sm px-3 py-1.5 rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Ke Beranda</button>
+              <button onClick={() => navigate('/marketplace')} className="text-xs md:text-sm px-3 py-1.5 rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Ke Marketplace</button>
+            </div>
           </div>
 
           {section === 'home' && (
@@ -145,16 +150,12 @@ export default function SellerDashboard() {
                   <div className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{products.length}</div>
                 </div>
                 <div className="rounded-lg border border-neutral-200 dark:border-white/10 p-4">
-                  <div className="text-sm text-neutral-600 dark:text-neutral-300">Aksi Cepat</div>
-                  <div className="mt-2 flex gap-2 flex-wrap">
-                    <button onClick={() => navigate('/seller/add')} className="px-3 py-1.5 text-sm rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Tambah Produk</button>
-                    <button onClick={() => navigate('/seller/edit')} className="px-3 py-1.5 text-sm rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Edit Produk</button>
-                    <button onClick={() => navigate('/seller/delete')} className="px-3 py-1.5 text-sm rounded-md border border-neutral-300 dark:border-white/20 text-neutral-900 dark:text-neutral-100 hover:bg-gray-200 dark:hover:bg-white/10">Hapus Produk</button>
-                  </div>
+                  <div className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Nama Pemilik</div>
+                  <div className="mt-1 text-lg font-semibold text-neutral-900 dark:text-neutral-100">{fullName}</div>
                 </div>
                 <div className="rounded-lg border border-neutral-200 dark:border-white/10 p-4">
-                  <div className="text-sm text-neutral-600 dark:text-neutral-300">Tips</div>
-                  <div className="text-sm mt-1 text-neutral-700 dark:text-neutral-300">Kelola produk Anda lewat menu aksi atau sidebar.</div>
+                  <div className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Nama Toko</div>
+                  <div className="mt-1 text-lg font-semibold text-neutral-900 dark:text-neutral-100">{storeName}</div>
                 </div>
               </div>
 
